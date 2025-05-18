@@ -14,6 +14,7 @@ using System;
 using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using AngleSharp.Text;
+using ParserContracts;
 
 
 
@@ -31,6 +32,17 @@ namespace PaletteConverter
             public string rgb_hex { get; set; }
             public string name { get; set; }
         }
+        /*
+        public interface IProductParserPlugin
+        {
+            string PluginName { get; }
+            List<string> SupportedBrands { get; }
+            Task<string> LoadPageSourceAsync(string brand);
+            List<ProductInfo> ParseProducts(string html);
+            public string name { get; set; }
+        }*/
+
+        
 
         private string enabledPluginsFile = "enabled_plugins.txt";
         private Dictionary<string, PaletteColor> ralColors = new();
@@ -218,13 +230,14 @@ namespace PaletteConverter
         {
 
         }
-        private List<IColorPalettePlugin> loadedPlugins = new();
+        private static List<IColorPalettePlugin> loadedPlugins = new();
+        private static List<IProductParserPlugin> loadedParsers = new();
         private void менеджерПлагиновToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var manager = new PluginManagerForm();
             manager.ShowDialog();
 
-            loadedPlugins = manager.GetEnabledPlugins();
+            loadedPlugins = PluginManagerForm.GetEnabledPlugins();
 
             comboBox1.Items.Clear();
             foreach (var plugin in loadedPlugins)
@@ -235,15 +248,22 @@ namespace PaletteConverter
         }
         private void refreshPlugins()
         {
-            var manager = new PluginManagerForm();
-            loadedPlugins = manager.GetEnabledPlugins();
-
+            //var manager = new PluginManagerForm();
+            
+            //MessageBox.Show("Плагины обновлены");
+            //manager.LoadPlugins();
+            //manager.LoadEnabledPlugins();
+            loadedPlugins = PluginManagerForm.GetEnabledPlugins();
+            loadedParsers = PluginManagerForm.GetEnabledParsers();
             comboBox1.Items.Clear();
             foreach (var plugin in loadedPlugins)
                 comboBox1.Items.Add(plugin.Name);
-
+            foreach (var parser in loadedParsers)
+                comboBox4.Items.Add(parser.Name);
             if (comboBox1.Items.Count > 0)
                 comboBox1.SelectedIndex = 0;
+            if (comboBox4.Items.Count > 0)
+                comboBox4.SelectedIndex = 0;
         }
 
         private void ColorNameBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -1033,17 +1053,7 @@ namespace PaletteConverter
 
 
 
-        public class ProductInfo
-        {
-            public string Name { get; set; }
-            public int Price { get; set; }
-            public string ImageUrl { get; set; }
-
-            public override string ToString()
-            {
-                return $"{Name} — {Price} руб.";
-            }
-        }
+        
 
         private List<ProductInfo> products = new List<ProductInfo>();
 
@@ -1051,60 +1061,38 @@ namespace PaletteConverter
 
         private async void ParseButton_Click(object sender, EventArgs e)
         {
-            var parser = new VseInstrumentiSeleniumParser();
-            string html = null;
-            switch (comboBox1.Text)
+            if (comboBox4.SelectedItem == null || comboBox1.SelectedItem == null)
             {
-                case "Dulux":
-                    html = await parser.LoadPageSourceAsync("https://www.vseinstrumenti.ru/brand/dulux-746/");
-                    break;
-                case "Tikkurila":
-                    html = await parser.LoadPageSourceAsync("https://www.vseinstrumenti.ru/brand/tikkurila-749/");
-                    break;
-                default:
-                    MessageBox.Show("Выберите валидный плагин.");
-                    return;
+                MessageBox.Show("Выберите плагин и бренд.");
+                return;
             }
 
-            var doc = new HtmlAgilityPack.HtmlDocument();
-            doc.LoadHtml(html);
+            var plugin = loadedParsers.First(p => p.Name == comboBox4.SelectedItem.ToString());
+            var brand = comboBox1.SelectedItem?.ToString() ?? string.Empty;
 
-            var names = doc.DocumentNode.SelectNodes("//a[@data-qa='product-name']");
-            var prices = doc.DocumentNode.SelectNodes("//p[@data-qa='product-price-current']");
-            //var imageUrls = ExtractImageUrls(html); // та же функция, как и раньше
-
-            if (names != null && prices != null && names.Count == prices.Count)
+            try
             {
+                //MessageBox.Show("Парсинг начат. Пожалуйста, подождите...");
+                var list = await plugin.GetProductsAsync(brand);
                 products.Clear();
                 comboBox5.Items.Clear();
 
-                for (int i = 0; i < names.Count; i++)
+                foreach (var product in list)
                 {
-                    var name = names[i].InnerText.Trim();
-                    var priceText = prices[i].InnerText.Trim().Replace("\u00A0", "").Replace(" ", "");
-                    var digitsOnly = new string(priceText.Where(char.IsDigit).ToArray());
-
-                    if (int.TryParse(digitsOnly, out int price))
-                    {
-                        var product = new ProductInfo
-                        {
-                            Name = name,
-                            Price = price,
-                            //ImageUrl = (imageUrls != null && i < imageUrls.Count) ? imageUrls[i] : null
-                        };
-
-                        products.Add(product);
-                        comboBox5.Items.Add(product);
-                    }
+                    products.Add(product);
+                    comboBox5.Items.Add(product);
                 }
-
                 if (comboBox5.Items.Count > 0)
                 {
                     comboBox5.SelectedIndex = 0;
                 }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}");
             }
         }
-        
 
 
         private void comboBox5_SelectedIndexChanged(object sender, EventArgs e)

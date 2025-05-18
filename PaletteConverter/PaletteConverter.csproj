@@ -19,6 +19,9 @@
     <Reference Include="PalettePluginContracts">
       <HintPath>..\..\PalettePluginContracts\PalettePluginContracts\bin\Debug\net8.0\PalettePluginContracts.dll</HintPath>
     </Reference>
+    <Reference Include="ParserContracts">
+      <HintPath>..\..\ParserContracts\ParserContracts\bin\Debug\net8.0\ParserContracts.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

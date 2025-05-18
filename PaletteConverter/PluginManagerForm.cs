@@ -1,30 +1,58 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 using PalettePluginContracts;
+using static PaletteConverter.Form1;
+using ParserContracts;
 
 namespace PaletteConverter
 {
     public partial class PluginManagerForm : Form
     {
-        private List<IColorPalettePlugin> allPlugins = new();
-        private string pluginDir = "Plugins";
-        private string enabledPluginsFile = "enabled_plugins.txt";
+        private static List<IColorPalettePlugin> allPlugins = new();
+        private static string pluginDir = "Plugins";
+        private static string enabledPluginsFile = "enabled_plugins.txt";
 
 
-        private Dictionary<string, IColorPalettePlugin> pluginByName = new();
+        private static Dictionary<string, IColorPalettePlugin> pluginByName = new();
+        
+        private static Dictionary<string, IProductParserPlugin> parserByName = new();
 
-        private HashSet<Guid> loadedPluginGuids = new();
+        private static HashSet<Guid> loadedPluginGuids = new();
 
 
 
         private Button buttonApply = new();
         private Button buttonCancel = new();
         
-        public HashSet<string> EnabledPluginNames { get; private set; } = new();
-        public event Action<List<IColorPalettePlugin>> PluginsLoaded;
+        public static HashSet<string> EnabledPluginNames { get; private set; } = new();
+        public static event Action<List<IColorPalettePlugin>> PluginsLoaded;
+
+
+        private static List<IProductParserPlugin> allParsers = new();
+        public static event Action<List<IProductParserPlugin>> ProductParsersLoaded;
+        public List<IProductParserPlugin> GetProductParsers() => allParsers;
+        private static Guid GetPluginGuid(object plugin)
+        {
+            try
+            {
+                var prop = plugin.GetType().GetProperty("PluginGuid");
+                if (prop == null)
+                {
+                    Debug.WriteLine($"Свойство PluginGuid не найдено у типа {plugin.GetType().FullName}");
+                    return Guid.Empty;
+                }
+                return (Guid)(prop.GetValue(plugin) ?? Guid.Empty);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка получения GUID из плагина: {ex.Message}");
+                return Guid.Empty;
+            }
+        }
 
         public PluginManagerForm()
         {
@@ -35,7 +63,7 @@ namespace PaletteConverter
             checkedListBoxPlugins.SelectedIndex = 0; // Устанавливаем первый элемент как выбранный по умолчанию
         }
 
-        private void LoadPlugins()
+        public static void LoadPlugins()
         {
             if (!Directory.Exists(pluginDir))
                 Directory.CreateDirectory(pluginDir);
@@ -44,39 +72,78 @@ namespace PaletteConverter
             {
                 try
                 {
+                    Debug.WriteLine($"Пробуем загрузить сборку: {file}");
                     var asm = Assembly.LoadFrom(file);
 
                     foreach (var type in asm.GetTypes())
                     {
                         try
                         {
-                            var guidProp = type.GetProperty("PluginGuid", BindingFlags.Public | BindingFlags.Instance);
-                            if (guidProp == null) continue;
+                            Debug.WriteLine($"Найден тип: {type.FullName}");
 
-                            object? tempInstance = Activator.CreateInstance(type);
-                            if (tempInstance == null) continue;
-
-                            Guid pluginGuid = (Guid)(guidProp.GetValue(tempInstance) ?? Guid.Empty);
-                            if (pluginGuid == Guid.Empty) continue;
-
-                            if (loadedPluginGuids.Contains(pluginGuid))
+                            if (!type.IsClass || type.IsAbstract)
                             {
-                                MessageBox.Show($"Пропущен дубликат плагина с GUID {pluginGuid}");
+                                Debug.WriteLine($"Пропущен абстрактный или не-класс тип: {type.FullName}");
                                 continue;
                             }
 
-                            // Теперь проверим — реализует ли плагин нужный интерфейс
-                            if (tempInstance is IColorPalettePlugin instance)
+                            // Вывод всех интерфейсов типа
+                            var interfaces = type.GetInterfaces();
+                            if (interfaces.Length == 0)
                             {
-                                loadedPluginGuids.Add(pluginGuid);
-                                allPlugins.Add(instance);
-
-                                
-                                pluginByName[instance.Name] = instance;
-
-                                Console.WriteLine($"Загружен плагин: {instance.Name} (GUID: {pluginGuid})");
+                                Debug.WriteLine($"  Интерфейсы: нет");
+                            }
+                            else
+                            {
+                                Debug.WriteLine("  Интерфейсы:");
+                                foreach (var iface in interfaces)
+                                {
+                                    Debug.WriteLine($"    {iface.FullName}");
+                                }
                             }
 
+                            object? tempInstance = null;
+
+                            // Проверка на IColorPalettePlugin
+                            if (typeof(IColorPalettePlugin).IsAssignableFrom(type))
+                            {
+                                tempInstance = Activator.CreateInstance(type);
+                                if (tempInstance is IColorPalettePlugin palettePlugin)
+                                {
+                                    var guid = GetPluginGuid(palettePlugin);
+                                    if (loadedPluginGuids.Contains(guid))
+                                        continue;
+
+                                    allPlugins.Add(palettePlugin);
+                                    pluginByName[palettePlugin.Name] = palettePlugin;
+                                    loadedPluginGuids.Add(guid);
+
+                                    //MessageBox.Show($"Загружен плагин палитры: {palettePlugin.Name} (GUID: {guid})");
+                                }
+                            }
+                            // Проверка на IProductParserPlugin
+                            else if (typeof(IProductParserPlugin).IsAssignableFrom(type))
+                            {
+                                tempInstance = Activator.CreateInstance(type);
+                                if (tempInstance is IProductParserPlugin parserPlugin)
+                                {
+                                    var guid = GetPluginGuid(parserPlugin);
+                                    if (loadedPluginGuids.Contains(guid))
+                                        continue;
+                                    
+                                    allParsers.Add(parserPlugin);
+                                    // Теперь строка будет работать корректно:
+                                    parserByName[parserPlugin.Name] = parserPlugin;
+                                    //comboBox4.Items.Add(parserPlugin.PluginName);
+                                    loadedPluginGuids.Add(guid);
+                                    //MessageBox.Show(allParsers.Count().ToString());
+                                    //MessageBox.Show($"Загружен плагин парсера: {parserPlugin.Name} (GUID: {guid})");
+                                }
+                            }
+                            else
+                            {
+                                Debug.WriteLine($"Тип {type.FullName} не реализует нужные интерфейсы.");
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -91,12 +158,15 @@ namespace PaletteConverter
                 }
             }
 
-            // Вызываем событие загрузки плагинов
             PluginsLoaded?.Invoke(allPlugins);
+            ProductParsersLoaded?.Invoke(allParsers);
         }
 
+        
 
-        private void LoadEnabledPlugins()
+
+
+        public void LoadEnabledPlugins()
         {
             if (File.Exists(enabledPluginsFile))
             {
@@ -104,9 +174,15 @@ namespace PaletteConverter
                 EnabledPluginNames = new HashSet<string>(lines);
             }
         }
-        public List<IColorPalettePlugin> GetEnabledPlugins()
+        public static List<IColorPalettePlugin> GetEnabledPlugins()
         {
             return allPlugins
+                .Where(p => EnabledPluginNames.Contains(p.Name))
+                .ToList();
+        }
+        public static List<IProductParserPlugin> GetEnabledParsers()
+        {
+            return allParsers
                 .Where(p => EnabledPluginNames.Contains(p.Name))
                 .ToList();
         }
@@ -123,6 +199,15 @@ namespace PaletteConverter
             {
                 var nameProp = plugin.GetType().GetProperty("Name");
                 var pluginName = nameProp?.GetValue(plugin)?.ToString();
+                if (!string.IsNullOrEmpty(pluginName))
+                {
+                    bool isChecked = EnabledPluginNames.Contains(pluginName);
+                    checkedListBoxPlugins.Items.Add(pluginName, isChecked);
+                }
+            }
+            foreach (var parser in allParsers)
+            {
+                var pluginName = parser.Name;
                 if (!string.IsNullOrEmpty(pluginName))
                 {
                     bool isChecked = EnabledPluginNames.Contains(pluginName);
@@ -171,7 +256,20 @@ namespace PaletteConverter
 
             string selectedPluginName = checkedListBoxPlugins.Items[selectedIndex].ToString();
 
-            if (pluginByName.TryGetValue(selectedPluginName, out var plugin))
+            object plugin = null;
+
+            // Сначала ищем в палитрах
+            if (pluginByName.TryGetValue(selectedPluginName, out var palettePlugin))
+            {
+                plugin = palettePlugin;
+            }
+            // Если не найдено — ищем в парсерах
+            else if (parserByName.TryGetValue(selectedPluginName, out var parserPlugin))
+            {
+                plugin = parserPlugin;
+            }
+
+            if (plugin != null)
             {
                 var type = plugin.GetType();
 
@@ -182,14 +280,19 @@ namespace PaletteConverter
                 string updatedAt = type.GetProperty("LastUpdated")?.GetValue(plugin)?.ToString() ?? "-";
                 string guid = type.GetProperty("PluginGuid")?.GetValue(plugin)?.ToString() ?? "-";
 
-                AuthorLabel.Text = $"{author}";
-                DescBox.Text = $"{description}";
-                VersionLabel.Text = $"{version}";
-                GuidLabel.Text = $"{guid}";
-                CreatedLabel.Text = $"{createdAt}";
-                UpdatedLabel.Text = $"{updatedAt}";
+                AuthorLabel.Text = author;
+                DescBox.Text = description;
+                VersionLabel.Text = version;
+                GuidLabel.Text = guid;
+                CreatedLabel.Text = createdAt;
+                UpdatedLabel.Text = updatedAt;
+            }
+            else
+            {
+                MessageBox.Show("Плагин не найден", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
+
 
     }
 }
