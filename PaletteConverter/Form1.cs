@@ -237,7 +237,7 @@ namespace PaletteConverter
             var manager = new PluginManagerForm();
             manager.ShowDialog();
 
-            loadedPlugins = PluginManagerForm.GetEnabledPlugins();
+            loadedPlugins = PluginManagerForm.GetEnabledPalettes();
 
             comboBox1.Items.Clear();
             foreach (var plugin in loadedPlugins)
@@ -253,7 +253,7 @@ namespace PaletteConverter
             //MessageBox.Show("Плагины обновлены");
             //manager.LoadPlugins();
             //manager.LoadEnabledPlugins();
-            loadedPlugins = PluginManagerForm.GetEnabledPlugins();
+            loadedPlugins = PluginManagerForm.GetEnabledPalettes();
             loadedParsers = PluginManagerForm.GetEnabledParsers();
             comboBox1.Items.Clear();
             foreach (var plugin in loadedPlugins)
@@ -734,6 +734,17 @@ namespace PaletteConverter
             ColG.Text = color.G.ToString();
             ColB.Text = color.B.ToString();
             FindClosestColor();
+            var colorPreviewPlugin = PluginManagerForm.FormPlugins
+                .FirstOrDefault(p => p.Name == "Color Preview");
+            try
+            {
+                dynamic plugin = colorPreviewPlugin;
+                plugin.SetColor(panel2.BackColor);
+            }
+            catch
+            {
+
+            }
         }
         public class MouseClickFilter : IMessageFilter
         {
@@ -1211,5 +1222,42 @@ namespace PaletteConverter
         {
 
         }
+
+        private void PreviewButton_Click(object sender, EventArgs e)
+        {
+            var colorPreviewPlugin = PluginManagerForm.FormPlugins
+                .FirstOrDefault(p => p.Name == "Color Preview");
+
+            if (colorPreviewPlugin == null)
+            {
+                MessageBox.Show("Плагин 'Color Preview' не загружен.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Получаем цвет из главной формы
+            Color selectedColor = panel2.BackColor;
+
+            // Устанавливаем цвет в плагин (если реализован метод SetColor)
+            try
+            {
+                dynamic plugin = colorPreviewPlugin;
+                plugin.SetColor(panel2.BackColor);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка установки цвета в плагине: " + ex.Message);
+            }
+
+            // Показываем форму предпросмотра
+            var previewForm = colorPreviewPlugin.GetMainForm();
+
+            previewForm.FormClosed += (s, ev) =>
+            {
+                previewForm.Dispose();
+            };
+
+            previewForm.Show(this);
+        }
+
     }
 }

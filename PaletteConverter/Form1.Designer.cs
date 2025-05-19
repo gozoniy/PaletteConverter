@@ -59,6 +59,7 @@
             pipette = new Button();
             ColorPic = new Button();
             Calc = new TabPage();
+            label26 = new Label();
             BrandBox = new ComboBox();
             label25 = new Label();
             LayersLabel = new TextBox();
@@ -105,7 +106,7 @@
             оПрограммеToolStripMenuItem = new ToolStripMenuItem();
             менеджерПлагиновToolStripMenuItem = new ToolStripMenuItem();
             выходToolStripMenuItem = new ToolStripMenuItem();
-            label26 = new Label();
+            PreviewButton = new Button();
             ColorMaker.SuspendLayout();
             Converter.SuspendLayout();
             Calc.SuspendLayout();
@@ -128,6 +129,7 @@
             // 
             // Converter
             // 
+            Converter.Controls.Add(PreviewButton);
             Converter.Controls.Add(ScreenColorButton);
             Converter.Controls.Add(label10);
             Converter.Controls.Add(comboBox3);
@@ -159,7 +161,7 @@
             Converter.Location = new Point(4, 24);
             Converter.Name = "Converter";
             Converter.Padding = new Padding(3);
-            Converter.Size = new Size(775, 398);
+            Converter.Size = new Size(775, 415);
             Converter.TabIndex = 0;
             Converter.Text = "Конвертер цветов";
             Converter.UseVisualStyleBackColor = true;
@@ -466,6 +468,15 @@
             Calc.TabIndex = 1;
             Calc.Text = "Калькулятор краски";
             Calc.UseVisualStyleBackColor = true;
+            // 
+            // label26
+            // 
+            label26.AutoSize = true;
+            label26.Location = new Point(6, 137);
+            label26.Name = "label26";
+            label26.Size = new Size(134, 15);
+            label26.TabIndex = 40;
+            label26.Text = "Цвет стен до покраски:";
             // 
             // BrandBox
             // 
@@ -852,7 +863,7 @@
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(775, 398);
+            tabPage3.Size = new Size(775, 415);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Колеровка";
             tabPage3.UseVisualStyleBackColor = true;
@@ -885,14 +896,15 @@
             выходToolStripMenuItem.Size = new Size(53, 20);
             выходToolStripMenuItem.Text = "Выход";
             // 
-            // label26
+            // PreviewButton
             // 
-            label26.AutoSize = true;
-            label26.Location = new Point(6, 137);
-            label26.Name = "label26";
-            label26.Size = new Size(134, 15);
-            label26.TabIndex = 40;
-            label26.Text = "Цвет стен до покраски:";
+            PreviewButton.Location = new Point(567, 323);
+            PreviewButton.Name = "PreviewButton";
+            PreviewButton.Size = new Size(200, 38);
+            PreviewButton.TabIndex = 28;
+            PreviewButton.Text = "Предпросмотр цвета";
+            PreviewButton.UseVisualStyleBackColor = true;
+            PreviewButton.Click += PreviewButton_Click;
             // 
             // Form1
             // 
@@ -997,5 +1009,6 @@
         private Label label25;
         private ComboBox BrandBox;
         private Label label26;
+        private Button PreviewButton;
     }
 }

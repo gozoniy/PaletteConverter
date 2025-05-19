@@ -43,6 +43,9 @@
             label6 = new Label();
             UpdatedLabel = new Label();
             DescBox = new TextBox();
+            Settings_button = new Button();
+            label7 = new Label();
+            TypeLabel = new Label();
             SuspendLayout();
             // 
             // checkedListBoxPlugins
@@ -80,7 +83,7 @@
             // Label2
             // 
             Label2.AutoSize = true;
-            Label2.Location = new Point(300, 97);
+            Label2.Location = new Point(300, 110);
             Label2.Name = "Label2";
             Label2.Size = new Size(62, 15);
             Label2.TabIndex = 3;
@@ -89,9 +92,10 @@
             // Label1
             // 
             Label1.AutoSize = true;
+            Label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             Label1.Location = new Point(300, 38);
             Label1.Name = "Label1";
-            Label1.Size = new Size(40, 15);
+            Label1.Size = new Size(41, 15);
             Label1.TabIndex = 4;
             Label1.Text = "Автор";
             // 
@@ -108,9 +112,10 @@
             // 
             Label3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             Label3.AutoSize = true;
+            Label3.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             Label3.Location = new Point(479, 38);
             Label3.Name = "Label3";
-            Label3.Size = new Size(46, 15);
+            Label3.Size = new Size(50, 15);
             Label3.TabIndex = 7;
             Label3.Text = "Версия";
             // 
@@ -128,9 +133,10 @@
             // 
             label4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label4.AutoSize = true;
+            label4.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             label4.Location = new Point(543, 38);
             label4.Name = "label4";
-            label4.Size = new Size(34, 15);
+            label4.Size = new Size(38, 15);
             label4.TabIndex = 9;
             label4.Text = "GUID";
             // 
@@ -183,18 +189,53 @@
             // DescBox
             // 
             DescBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            DescBox.Location = new Point(300, 115);
+            DescBox.Location = new Point(300, 128);
             DescBox.Multiline = true;
             DescBox.Name = "DescBox";
             DescBox.ReadOnly = true;
             DescBox.Size = new Size(454, 146);
             DescBox.TabIndex = 15;
             // 
+            // Settings_button
+            // 
+            Settings_button.Anchor = AnchorStyles.Right;
+            Settings_button.Enabled = false;
+            Settings_button.Location = new Point(306, 438);
+            Settings_button.Name = "Settings_button";
+            Settings_button.Size = new Size(85, 23);
+            Settings_button.TabIndex = 16;
+            Settings_button.Text = "Настройки";
+            Settings_button.UseVisualStyleBackColor = true;
+            Settings_button.Click += Settings_button_Click;
+            // 
+            // label7
+            // 
+            label7.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            label7.AutoSize = true;
+            label7.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label7.Location = new Point(300, 68);
+            label7.Name = "label7";
+            label7.Size = new Size(104, 15);
+            label7.TabIndex = 17;
+            label7.Text = "Тип расширения";
+            // 
+            // TypeLabel
+            // 
+            TypeLabel.AutoSize = true;
+            TypeLabel.Location = new Point(300, 83);
+            TypeLabel.Name = "TypeLabel";
+            TypeLabel.Size = new Size(23, 15);
+            TypeLabel.TabIndex = 18;
+            TypeLabel.Text = "<>";
+            // 
             // PluginManagerForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(766, 473);
+            Controls.Add(TypeLabel);
+            Controls.Add(label7);
+            Controls.Add(Settings_button);
             Controls.Add(DescBox);
             Controls.Add(UpdatedLabel);
             Controls.Add(label6);
@@ -233,5 +274,8 @@
         private Label label6;
         private Label UpdatedLabel;
         private TextBox DescBox;
+        private Button Settings_button;
+        private Label label7;
+        private Label TypeLabel;
     }
 }

@@ -16,6 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="FormPluginsContracts">
+      <HintPath>..\..\FormPluginsContracts\FormPluginsContracts\bin\Debug\net8.0-windows\FormPluginsContracts.dll</HintPath>
+    </Reference>
     <Reference Include="PalettePluginContracts">
       <HintPath>..\..\PalettePluginContracts\PalettePluginContracts\bin\Debug\net8.0\PalettePluginContracts.dll</HintPath>
     </Reference>

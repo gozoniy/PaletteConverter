@@ -7,19 +7,25 @@ using System.Windows.Forms;
 using PalettePluginContracts;
 using static PaletteConverter.Form1;
 using ParserContracts;
+using FormPluginsContracts;
 
 namespace PaletteConverter
 {
     public partial class PluginManagerForm : Form
     {
-        private static List<IColorPalettePlugin> allPlugins = new();
+        public static List<IColorPalettePlugin> allPalettes = new();
+        public static List<IProductParserPlugin> allParsers = new();
+        public static List<IFormPlugin> FormPlugins = new();
+
         private static string pluginDir = "Plugins";
-        private static string enabledPluginsFile = "enabled_plugins.txt";
+        private static string enabledPluginsFile = "enabled_plugins.ini";
 
 
         private static Dictionary<string, IColorPalettePlugin> pluginByName = new();
-        
+
         private static Dictionary<string, IProductParserPlugin> parserByName = new();
+
+        private static Dictionary<string, IFormPlugin> formPluginByName = new();
 
         private static HashSet<Guid> loadedPluginGuids = new();
 
@@ -27,12 +33,12 @@ namespace PaletteConverter
 
         private Button buttonApply = new();
         private Button buttonCancel = new();
-        
+
         public static HashSet<string> EnabledPluginNames { get; private set; } = new();
         public static event Action<List<IColorPalettePlugin>> PluginsLoaded;
 
 
-        private static List<IProductParserPlugin> allParsers = new();
+
         public static event Action<List<IProductParserPlugin>> ProductParsersLoaded;
         public List<IProductParserPlugin> GetProductParsers() => allParsers;
         private static Guid GetPluginGuid(object plugin)
@@ -114,7 +120,7 @@ namespace PaletteConverter
                                     if (loadedPluginGuids.Contains(guid))
                                         continue;
 
-                                    allPlugins.Add(palettePlugin);
+                                    allPalettes.Add(palettePlugin);
                                     pluginByName[palettePlugin.Name] = palettePlugin;
                                     loadedPluginGuids.Add(guid);
 
@@ -130,7 +136,7 @@ namespace PaletteConverter
                                     var guid = GetPluginGuid(parserPlugin);
                                     if (loadedPluginGuids.Contains(guid))
                                         continue;
-                                    
+
                                     allParsers.Add(parserPlugin);
                                     // Теперь строка будет работать корректно:
                                     parserByName[parserPlugin.Name] = parserPlugin;
@@ -139,6 +145,23 @@ namespace PaletteConverter
                                     //MessageBox.Show(allParsers.Count().ToString());
                                     //MessageBox.Show($"Загружен плагин парсера: {parserPlugin.Name} (GUID: {guid})");
                                 }
+                            }
+                            else if (typeof(IFormPlugin).IsAssignableFrom(type))
+                            {
+                                tempInstance = Activator.CreateInstance(type);
+                                if (tempInstance is IFormPlugin formPlugin)
+                                {
+                                    var guid = GetPluginGuid(formPlugin);
+                                    if (loadedPluginGuids.Contains(guid))
+                                        continue;
+
+                                    FormPlugins.Add(formPlugin);
+                                    formPluginByName[formPlugin.Name] = formPlugin; // <-- добавляем в словарь
+                                    loadedPluginGuids.Add(guid);
+
+                                    //pluginByName[formPlugin.Name] = null; // для отображения в списке
+                                }
+
                             }
                             else
                             {
@@ -158,11 +181,11 @@ namespace PaletteConverter
                 }
             }
 
-            PluginsLoaded?.Invoke(allPlugins);
+            PluginsLoaded?.Invoke(allPalettes);
             ProductParsersLoaded?.Invoke(allParsers);
         }
 
-        
+
 
 
 
@@ -174,9 +197,9 @@ namespace PaletteConverter
                 EnabledPluginNames = new HashSet<string>(lines);
             }
         }
-        public static List<IColorPalettePlugin> GetEnabledPlugins()
+        public static List<IColorPalettePlugin> GetEnabledPalettes()
         {
-            return allPlugins
+            return allPalettes
                 .Where(p => EnabledPluginNames.Contains(p.Name))
                 .ToList();
         }
@@ -186,16 +209,23 @@ namespace PaletteConverter
                 .Where(p => EnabledPluginNames.Contains(p.Name))
                 .ToList();
         }
+        public static List<IFormPlugin> GetEnabledFormPlugins()
+        {
+            return FormPlugins
+                .Where(p => EnabledPluginNames.Contains(p.Name))
+                .ToList();
+        }
+
 
         private void InitUI()
         {
-            if (allPlugins.Count == 0)
+            if (allPalettes.Count == 0)
             {
                 MessageBox.Show("Нет загруженных плагинов.");
                 return;
             }
 
-            foreach (var plugin in allPlugins)
+            foreach (var plugin in allPalettes)
             {
                 var nameProp = plugin.GetType().GetProperty("Name");
                 var pluginName = nameProp?.GetValue(plugin)?.ToString();
@@ -214,6 +244,16 @@ namespace PaletteConverter
                     checkedListBoxPlugins.Items.Add(pluginName, isChecked);
                 }
             }
+            foreach (var formPlugin in FormPlugins)
+            {
+                string pluginName = formPlugin.Name;
+                if (!string.IsNullOrEmpty(pluginName))
+                {
+                    bool isChecked = EnabledPluginNames.Contains(pluginName);
+                    checkedListBoxPlugins.Items.Add(pluginName, isChecked);
+                }
+            }
+
         }
 
         private void SaveEnabledPlugins()
@@ -258,16 +298,28 @@ namespace PaletteConverter
 
             object plugin = null;
 
-            // Сначала ищем в палитрах
-            if (pluginByName.TryGetValue(selectedPluginName, out var palettePlugin))
+
+
+            // Сначала ищем в FormPlugins
+            if (formPluginByName.TryGetValue(selectedPluginName, out var formPlugin))
+            {
+                plugin = formPlugin;
+                Settings_button.Enabled = true;
+            }
+            // Потом ищем в палитрах
+            else if (pluginByName.TryGetValue(selectedPluginName, out var palettePlugin))
             {
                 plugin = palettePlugin;
+                Settings_button.Enabled = false;
             }
-            // Если не найдено — ищем в парсерах
+            // Потом в парсерах
             else if (parserByName.TryGetValue(selectedPluginName, out var parserPlugin))
             {
                 plugin = parserPlugin;
+                Settings_button.Enabled = false;
             }
+
+
 
             if (plugin != null)
             {
@@ -280,12 +332,17 @@ namespace PaletteConverter
                 string updatedAt = type.GetProperty("LastUpdated")?.GetValue(plugin)?.ToString() ?? "-";
                 string guid = type.GetProperty("PluginGuid")?.GetValue(plugin)?.ToString() ?? "-";
 
+                string typeName = plugin is IColorPalettePlugin ? "Палитра" :
+                                  plugin is IProductParserPlugin ? "Парсер" :
+                                  plugin is IFormPlugin ? "Интерфейс" : type.Name.ToString();
+
                 AuthorLabel.Text = author;
                 DescBox.Text = description;
                 VersionLabel.Text = version;
                 GuidLabel.Text = guid;
                 CreatedLabel.Text = createdAt;
                 UpdatedLabel.Text = updatedAt;
+                TypeLabel.Text = typeName;
             }
             else
             {
@@ -293,6 +350,30 @@ namespace PaletteConverter
             }
         }
 
+        private void Settings_button_Click(object sender, EventArgs e)
+        {
+            int selectedIndex = checkedListBoxPlugins.SelectedIndex;
+            if (selectedIndex < 0) return;
 
+            string selectedPluginName = checkedListBoxPlugins.Items[selectedIndex].ToString();
+
+            if (formPluginByName.TryGetValue(selectedPluginName, out var formPlugin))
+            {
+                // Вызов формы настроек плагина
+                var settingsForm = formPlugin.GetSettingsForm();
+                if (settingsForm != null)
+                {
+                    settingsForm.ShowDialog(this);
+                }
+                else
+                {
+                    MessageBox.Show("У этого плагина нет формы настроек.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Настройки доступны только для плагинов интерфейса.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
     }
 }
