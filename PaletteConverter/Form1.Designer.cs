@@ -59,6 +59,8 @@
             pipette = new Button();
             ColorPic = new Button();
             Calc = new TabPage();
+            BrandBox = new ComboBox();
+            label25 = new Label();
             LayersLabel = new TextBox();
             label24 = new Label();
             panel4 = new Panel();
@@ -103,6 +105,7 @@
             оПрограммеToolStripMenuItem = new ToolStripMenuItem();
             менеджерПлагиновToolStripMenuItem = new ToolStripMenuItem();
             выходToolStripMenuItem = new ToolStripMenuItem();
+            label26 = new Label();
             ColorMaker.SuspendLayout();
             Converter.SuspendLayout();
             Calc.SuspendLayout();
@@ -120,7 +123,7 @@
             ColorMaker.Location = new Point(0, 24);
             ColorMaker.Name = "ColorMaker";
             ColorMaker.SelectedIndex = 0;
-            ColorMaker.Size = new Size(783, 426);
+            ColorMaker.Size = new Size(783, 443);
             ColorMaker.TabIndex = 0;
             // 
             // Converter
@@ -426,6 +429,9 @@
             // 
             // Calc
             // 
+            Calc.Controls.Add(label26);
+            Calc.Controls.Add(BrandBox);
+            Calc.Controls.Add(label25);
             Calc.Controls.Add(LayersLabel);
             Calc.Controls.Add(label24);
             Calc.Controls.Add(panel4);
@@ -456,14 +462,32 @@
             Calc.Location = new Point(4, 24);
             Calc.Name = "Calc";
             Calc.Padding = new Padding(3);
-            Calc.Size = new Size(775, 398);
+            Calc.Size = new Size(775, 415);
             Calc.TabIndex = 1;
             Calc.Text = "Калькулятор краски";
             Calc.UseVisualStyleBackColor = true;
             // 
+            // BrandBox
+            // 
+            BrandBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            BrandBox.FormattingEnabled = true;
+            BrandBox.Location = new Point(373, 21);
+            BrandBox.Name = "BrandBox";
+            BrandBox.Size = new Size(121, 23);
+            BrandBox.TabIndex = 39;
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Location = new Point(373, 3);
+            label25.Name = "label25";
+            label25.Size = new Size(92, 15);
+            label25.TabIndex = 38;
+            label25.Text = "Производитель";
+            // 
             // LayersLabel
             // 
-            LayersLabel.Location = new Point(130, 366);
+            LayersLabel.Location = new Point(130, 390);
             LayersLabel.Name = "LayersLabel";
             LayersLabel.Size = new Size(76, 23);
             LayersLabel.TabIndex = 37;
@@ -472,7 +496,7 @@
             // label24
             // 
             label24.AutoSize = true;
-            label24.Location = new Point(8, 374);
+            label24.Location = new Point(8, 398);
             label24.Name = "label24";
             label24.Size = new Size(44, 15);
             label24.TabIndex = 35;
@@ -736,6 +760,7 @@
             // 
             // comboBox5
             // 
+            comboBox5.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox5.FormattingEnabled = true;
             comboBox5.Location = new Point(310, 47);
             comboBox5.Name = "comboBox5";
@@ -756,12 +781,13 @@
             // PaintsBox
             // 
             PaintsBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            PaintsBox.Location = new Point(229, 100);
+            PaintsBox.Location = new Point(229, 103);
             PaintsBox.Multiline = true;
             PaintsBox.Name = "PaintsBox";
             PaintsBox.ReadOnly = true;
             PaintsBox.Size = new Size(339, 158);
             PaintsBox.TabIndex = 16;
+            PaintsBox.TextChanged += PaintsBox_TextChanged;
             // 
             // label16
             // 
@@ -774,6 +800,7 @@
             // 
             // comboBox4
             // 
+            comboBox4.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox4.FormattingEnabled = true;
             comboBox4.Location = new Point(229, 21);
             comboBox4.Name = "comboBox4";
@@ -783,7 +810,7 @@
             // 
             // HexBox
             // 
-            HexBox.Location = new Point(130, 342);
+            HexBox.Location = new Point(130, 361);
             HexBox.Name = "HexBox";
             HexBox.Size = new Size(76, 23);
             HexBox.TabIndex = 11;
@@ -803,7 +830,7 @@
             // 
             panel3.BackColor = Color.White;
             panel3.BorderStyle = BorderStyle.Fixed3D;
-            panel3.Location = new Point(6, 135);
+            panel3.Location = new Point(6, 155);
             panel3.Name = "panel3";
             panel3.Size = new Size(200, 200);
             panel3.TabIndex = 9;
@@ -812,7 +839,7 @@
             // 
             // button1
             // 
-            button1.Location = new Point(6, 341);
+            button1.Location = new Point(6, 360);
             button1.Name = "button1";
             button1.Size = new Size(102, 23);
             button1.TabIndex = 8;
@@ -858,11 +885,20 @@
             выходToolStripMenuItem.Size = new Size(53, 20);
             выходToolStripMenuItem.Text = "Выход";
             // 
+            // label26
+            // 
+            label26.AutoSize = true;
+            label26.Location = new Point(6, 137);
+            label26.Name = "label26";
+            label26.Size = new Size(134, 15);
+            label26.TabIndex = 40;
+            label26.Text = "Цвет стен до покраски:";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(783, 450);
+            ClientSize = new Size(783, 467);
             Controls.Add(ColorMaker);
             Controls.Add(menuStrip1);
             Name = "Form1";
@@ -958,5 +994,8 @@
         private ComboBox comboBox6;
         private Label label24;
         private TextBox LayersLabel;
+        private Label label25;
+        private ComboBox BrandBox;
+        private Label label26;
     }
 }

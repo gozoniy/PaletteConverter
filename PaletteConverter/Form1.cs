@@ -42,7 +42,7 @@ namespace PaletteConverter
             public string name { get; set; }
         }*/
 
-        
+
 
         private string enabledPluginsFile = "enabled_plugins.txt";
         private Dictionary<string, PaletteColor> ralColors = new();
@@ -249,7 +249,7 @@ namespace PaletteConverter
         private void refreshPlugins()
         {
             //var manager = new PluginManagerForm();
-            
+
             //MessageBox.Show("Плагины обновлены");
             //manager.LoadPlugins();
             //manager.LoadEnabledPlugins();
@@ -960,8 +960,25 @@ namespace PaletteConverter
 
         private void comboBox4_SelectedIndexChanged(object sender, EventArgs e)
         {
+            var plugin = loadedParsers.First(p => p.Name == comboBox4.SelectedItem.ToString());
 
+            BrandBox.Items.Clear();
+            BrandBox.Items.AddRange(plugin.SupportedBrands.ToArray());
+
+            // Если comboBox1 содержит бренд, пытаемся его выбрать
+            string selectedBrand = comboBox1.Text;
+            int existingIndex = BrandBox.Items.IndexOf(selectedBrand);
+
+            if (existingIndex >= 0)
+            {
+                BrandBox.SelectedIndex = existingIndex;
+            }
+            else if (BrandBox.Items.Count > 0)
+            {
+                BrandBox.SelectedIndex = 0; // если совпадений нет — выбираем первый
+            }
         }
+
 
 
 
@@ -1053,7 +1070,7 @@ namespace PaletteConverter
 
 
 
-        
+
 
         private List<ProductInfo> products = new List<ProductInfo>();
 
@@ -1061,14 +1078,14 @@ namespace PaletteConverter
 
         private async void ParseButton_Click(object sender, EventArgs e)
         {
-            if (comboBox4.SelectedItem == null || comboBox1.SelectedItem == null)
+            if (comboBox4.SelectedItem == null || BrandBox.SelectedItem == null)
             {
                 MessageBox.Show("Выберите плагин и бренд.");
                 return;
             }
 
             var plugin = loadedParsers.First(p => p.Name == comboBox4.SelectedItem.ToString());
-            var brand = comboBox1.SelectedItem?.ToString() ?? string.Empty;
+            var brand = BrandBox.SelectedItem?.ToString() ?? string.Empty;
 
             try
             {
@@ -1108,11 +1125,29 @@ namespace PaletteConverter
                 // Извлекаем объем из названия (например, "Краска Dulux 2.5 л")
                 string name = selectedProduct.Name;
                 string volume = "";
+
+                // Пытаемся найти объем в литрах
                 var match = Regex.Match(name, @"(\d+(?:[.,]\d+)?)\s*л\b", RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
-                    volume = match.Groups[1].Value.Replace(',', '.'); // заменяем запятую на точку для единообразия
+                    volume = match.Groups[1].Value.Replace(',', '.'); // нормализуем
                 }
+                else
+                {
+                    // Если не нашли литры — ищем килограммы
+                    var matchKg = Regex.Match(name, @"(\d+(?:[.,]\d+)?)\s*кг\b", RegexOptions.IgnoreCase);
+                    if (matchKg.Success)
+                    {
+                        string kgStr = matchKg.Groups[1].Value.Replace(',', '.');
+                        if (double.TryParse(kgStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double weightKg))
+                        {
+                            double density = 1.3; // плотность в кг/л — можно вынести в константу/настройку
+                            double liters = weightKg / density;
+                            volume = liters.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); // округляем до 2 знаков
+                        }
+                    }
+                }
+
                 VolumeBox.Text = volume;
 
                 // Загрузка изображения
@@ -1170,6 +1205,11 @@ namespace PaletteConverter
         {
             CalculateRequiredLayers();
             calculate();
+        }
+
+        private void PaintsBox_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }
