@@ -734,17 +734,7 @@ namespace PaletteConverter
             ColG.Text = color.G.ToString();
             ColB.Text = color.B.ToString();
             FindClosestColor();
-            var colorPreviewPlugin = PluginManagerForm.FormPlugins
-                .FirstOrDefault(p => p.Name == "Color Preview");
-            try
-            {
-                dynamic plugin = colorPreviewPlugin;
-                plugin.SetColor(panel2.BackColor);
-            }
-            catch
-            {
-
-            }
+            
         }
         public class MouseClickFilter : IMessageFilter
         {
@@ -1216,6 +1206,17 @@ namespace PaletteConverter
         {
             CalculateRequiredLayers();
             calculate();
+            var colorPreviewPlugin = PluginManagerForm.FormPlugins
+                .FirstOrDefault(p => p.Name == "Color Preview");
+            try
+            {
+                dynamic plugin = colorPreviewPlugin;
+                plugin.SetColor(panel2.BackColor);
+            }
+            catch
+            {
+
+            }
         }
 
         private void PaintsBox_TextChanged(object sender, EventArgs e)
