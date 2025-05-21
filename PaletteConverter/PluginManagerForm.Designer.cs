@@ -46,6 +46,7 @@
             Settings_button = new Button();
             label7 = new Label();
             TypeLabel = new Label();
+            LastOperations = new TextBox();
             SuspendLayout();
             // 
             // checkedListBoxPlugins
@@ -228,11 +229,22 @@
             TypeLabel.TabIndex = 18;
             TypeLabel.Text = "<>";
             // 
+            // LastOperations
+            // 
+            LastOperations.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            LastOperations.Location = new Point(300, 286);
+            LastOperations.Multiline = true;
+            LastOperations.Name = "LastOperations";
+            LastOperations.ReadOnly = true;
+            LastOperations.Size = new Size(454, 53);
+            LastOperations.TabIndex = 19;
+            // 
             // PluginManagerForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(766, 473);
+            Controls.Add(LastOperations);
             Controls.Add(TypeLabel);
             Controls.Add(label7);
             Controls.Add(Settings_button);
@@ -277,5 +289,6 @@
         private Button Settings_button;
         private Label label7;
         private Label TypeLabel;
+        private TextBox LastOperations;
     }
 }

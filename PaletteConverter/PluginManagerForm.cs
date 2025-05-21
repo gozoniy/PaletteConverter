@@ -305,18 +305,21 @@ namespace PaletteConverter
             {
                 plugin = formPlugin;
                 Settings_button.Enabled = true;
+                LastOperations.Enabled = false;
             }
             // Потом ищем в палитрах
             else if (pluginByName.TryGetValue(selectedPluginName, out var palettePlugin))
             {
                 plugin = palettePlugin;
                 Settings_button.Enabled = false;
+                LastOperations.Enabled = true;
             }
             // Потом в парсерах
             else if (parserByName.TryGetValue(selectedPluginName, out var parserPlugin))
             {
                 plugin = parserPlugin;
                 Settings_button.Enabled = false;
+                LastOperations.Enabled = true;
             }
 
 
@@ -343,6 +346,27 @@ namespace PaletteConverter
                 CreatedLabel.Text = createdAt;
                 UpdatedLabel.Text = updatedAt;
                 TypeLabel.Text = typeName;
+
+                string PluginCurrent = type.GetProperty("Name")?.GetValue(plugin)?.ToString();
+
+                if (Form1.pluginExecutionTimes.TryGetValue(selectedPluginName, out var execTimes))
+                {
+                    // Преобразуем очередь в список и форматируем
+                    var timesText = string.Join(", ", execTimes.Select(t => $"{t}"));
+
+                    LastOperations.Text = $"Время последних операций (мс):\r\n{timesText}";
+
+                    if (Form1.pluginAverageTimes.TryGetValue(selectedPluginName, out var avg))
+                    {
+                        LastOperations.AppendText($"\r\nСреднее: {avg:F2} мс");
+                    }
+                }
+                else
+                {
+                    LastOperations.Text = "Нет данных по времени выполнения.";
+                }
+
+
             }
             else
             {

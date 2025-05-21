@@ -28,8 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             ColorMaker = new TabControl();
             Converter = new TabPage();
+            PreviewButton = new Button();
             ScreenColorButton = new Button();
             label10 = new Label();
             comboBox3 = new ComboBox();
@@ -106,7 +108,8 @@
             оПрограммеToolStripMenuItem = new ToolStripMenuItem();
             менеджерПлагиновToolStripMenuItem = new ToolStripMenuItem();
             выходToolStripMenuItem = new ToolStripMenuItem();
-            PreviewButton = new Button();
+            contextMenuStrip1 = new ContextMenuStrip(components);
+            AvgTimeLabel = new Label();
             ColorMaker.SuspendLayout();
             Converter.SuspendLayout();
             Calc.SuspendLayout();
@@ -129,6 +132,7 @@
             // 
             // Converter
             // 
+            Converter.Controls.Add(AvgTimeLabel);
             Converter.Controls.Add(PreviewButton);
             Converter.Controls.Add(ScreenColorButton);
             Converter.Controls.Add(label10);
@@ -165,6 +169,16 @@
             Converter.TabIndex = 0;
             Converter.Text = "Конвертер цветов";
             Converter.UseVisualStyleBackColor = true;
+            // 
+            // PreviewButton
+            // 
+            PreviewButton.Location = new Point(567, 323);
+            PreviewButton.Name = "PreviewButton";
+            PreviewButton.Size = new Size(200, 38);
+            PreviewButton.TabIndex = 28;
+            PreviewButton.Text = "Предпросмотр цвета";
+            PreviewButton.UseVisualStyleBackColor = true;
+            PreviewButton.Click += PreviewButton_Click;
             // 
             // ScreenColorButton
             // 
@@ -896,15 +910,19 @@
             выходToolStripMenuItem.Size = new Size(53, 20);
             выходToolStripMenuItem.Text = "Выход";
             // 
-            // PreviewButton
+            // contextMenuStrip1
             // 
-            PreviewButton.Location = new Point(567, 323);
-            PreviewButton.Name = "PreviewButton";
-            PreviewButton.Size = new Size(200, 38);
-            PreviewButton.TabIndex = 28;
-            PreviewButton.Text = "Предпросмотр цвета";
-            PreviewButton.UseVisualStyleBackColor = true;
-            PreviewButton.Click += PreviewButton_Click;
+            contextMenuStrip1.Name = "contextMenuStrip1";
+            contextMenuStrip1.Size = new Size(61, 4);
+            // 
+            // AvgTimeLabel
+            // 
+            AvgTimeLabel.AutoSize = true;
+            AvgTimeLabel.Location = new Point(322, 121);
+            AvgTimeLabel.Name = "AvgTimeLabel";
+            AvgTimeLabel.Size = new Size(44, 15);
+            AvgTimeLabel.TabIndex = 29;
+            AvgTimeLabel.Text = "label27";
             // 
             // Form1
             // 
@@ -1010,5 +1028,7 @@
         private ComboBox BrandBox;
         private Label label26;
         private Button PreviewButton;
+        private ContextMenuStrip contextMenuStrip1;
+        private Label AvgTimeLabel;
     }
 }

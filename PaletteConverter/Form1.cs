@@ -47,6 +47,9 @@ namespace PaletteConverter
         private string enabledPluginsFile = "enabled_plugins.txt";
         private Dictionary<string, PaletteColor> ralColors = new();
 
+        long elapsedMs = 0;
+        static public Dictionary<string, Queue<long>> pluginExecutionTimes = new();
+        static public Dictionary<string, double> pluginAverageTimes = new();
 
         public Form1()
         {
@@ -315,6 +318,16 @@ namespace PaletteConverter
             //updateSimilarity(minDistance, comparisonMethod);
             FindClosestColor(1);
         }
+        private void UpdateAverageTime(string pluginId)
+        {
+            if (!pluginExecutionTimes.TryGetValue(pluginId, out var queue) || queue.Count == 0)
+                return;
+
+            double avg = queue.Average();
+
+            pluginAverageTimes[pluginId] = avg;
+            AvgTimeLabel.Text = $"Среднее время: {avg:F2} мс";
+        }
 
         public void FindClosestColor(int flag = 0)
         {
@@ -326,8 +339,21 @@ namespace PaletteConverter
             if (plugin == null)
                 return;
 
+            // ДОБАВИТЬ: Измерение времени выполнения загрузки цветов
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var colors = plugin.LoadColors();
+            stopwatch.Stop();
+            elapsedMs = stopwatch.ElapsedMilliseconds;
+            // Добавить сохранение времени выполнения
+            if (!pluginExecutionTimes.ContainsKey(plugin.Name))
+                pluginExecutionTimes[plugin.Name] = new Queue<long>();
 
+            var queue = pluginExecutionTimes[plugin.Name];
+            if (queue.Count >= 20) // максимум 20 последних измерений
+                queue.Dequeue();
+
+            queue.Enqueue(elapsedMs);
+            UpdateAverageTime(plugin.Name);
             // Преобразуем HEX в Color
             Color targetColor;
             try
