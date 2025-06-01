@@ -26,6 +26,9 @@ using System.Management;
 
 using System.IO.Pipes;
 using System.IO;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.Optimization;
+using System.Text;
 
 
 
@@ -1030,7 +1033,14 @@ namespace PaletteConverter
                 RubTLabel.Text = totalPrice.ToString("F2");
                 RubLabel.Text = TeoryPrice.ToString("F2");
                 LitreLabel.Text = litersNeeded.ToString("F2");
+
+                // Vbox.Text = litersNeeded.ToString("F2");
+
+                //код для конвертации литров в граммы (1 л = 1300 г):
+                double gramsNeeded = litersNeeded * 1300;
+                Vbox.Text = gramsNeeded.ToString("F0"); // округляем до целых грамм
                 CansLabel.Text = cansNeeded.ToString("F2");
+                colercalc();
                 // Для отладки:
                 //MessageBox.Show($"litersNeeded={litersNeeded:F4}, volume={volume:F4}, cansNeeded={cansNeeded:F4}, cans={cans}");
             }
@@ -1255,31 +1265,29 @@ namespace PaletteConverter
                 var selectedProduct = products[comboBox5.SelectedIndex];
                 string imageUrl = selectedProduct.ImageUrl;
 
-                // Обновляем PriceBox
+                // Обновляем цену
                 PriceBox.Text = selectedProduct.Price.ToString();
 
-                // Извлекаем объем из названия (например, "Краска Dulux 2.5 л")
+                // Извлекаем объём
                 string name = selectedProduct.Name;
                 string volume = "";
 
-                // Пытаемся найти объем в литрах
                 var match = Regex.Match(name, @"(\d+(?:[.,]\d+)?)\s*л\b", RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
-                    volume = match.Groups[1].Value.Replace(',', '.'); // нормализуем
+                    volume = match.Groups[1].Value.Replace(',', '.');
                 }
                 else
                 {
-                    // Если не нашли литры — ищем килограммы
                     var matchKg = Regex.Match(name, @"(\d+(?:[.,]\d+)?)\s*кг\b", RegexOptions.IgnoreCase);
                     if (matchKg.Success)
                     {
                         string kgStr = matchKg.Groups[1].Value.Replace(',', '.');
                         if (double.TryParse(kgStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double weightKg))
                         {
-                            double density = 1.3; // плотность в кг/л — можно вынести в константу/настройку
+                            double density = 1.3; // кг/л
                             double liters = weightKg / density;
-                            volume = liters.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); // округляем до 2 знаков
+                            volume = liters.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
                         }
                     }
                 }
@@ -1289,16 +1297,20 @@ namespace PaletteConverter
                 // Загрузка изображения
                 if (!string.IsNullOrEmpty(imageUrl))
                 {
-                    using var client = new HttpClient();
+                    /*
+                    // Если ссылка относительная — добавим домен
+                    if (imageUrl.StartsWith("/"))
+                    {
+                        imageUrl = "https://www.virage24.ru" + imageUrl;
+                    }
+                    */
                     try
                     {
-                        var data = client.GetByteArrayAsync(imageUrl).Result;
-                        using var ms = new MemoryStream(data);
-                        pictureBox1.Image = Image.FromStream(ms);
+                        pictureBox1.LoadAsync(imageUrl);
                     }
                     catch
                     {
-                        pictureBox1.Image = null; // или заглушка
+                        pictureBox1.Image = null; // или картинка-заглушка
                     }
                 }
                 else
@@ -1307,8 +1319,8 @@ namespace PaletteConverter
                 }
 
                 calculate();
-            }
 
+            }
         }
 
         private void SquareBox_TextChanged(object sender, EventArgs e)
@@ -1602,6 +1614,141 @@ namespace PaletteConverter
         {
             var About = new AboutForm();
             About.Show();
+        }
+
+        private void colerbutton_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void colercalc()
+        {
+            Color selectedColor = panel2.BackColor;
+            double[] targetRgb = new double[] { selectedColor.R, selectedColor.G, selectedColor.B };
+
+            double brightness = (selectedColor.R + selectedColor.G + selectedColor.B) / 3.0;
+            bool useTransparentBase = brightness < 180;
+            BaseTypeLabel.Text = useTransparentBase ? "Прозрачная база" : "Белая база";
+
+            var pigments = new (string Name, double[] Rgb)[]
+            {
+        ("Желтый", new double[] {255, 238, 0}),
+        ("Красный", new double[] {210, 0, 0}),
+        ("Синий", new double[] {0, 30, 120}),
+        ("Черный", new double[] {0, 0, 0}),
+        ("Белый", new double[] {255, 255, 255}),
+        ("Зелёный", new double[] {0, 200, 0}),
+        ("Оранжевый", new double[] {255, 100, 0}),
+        ("Фиолетовый", new double[] {120, 0, 150})
+            };
+
+            double step = 0.1;
+            double minError = double.MaxValue;
+            double[] bestWeights = new double[pigments.Length];
+            int n = pigments.Length;
+
+            void Recurse(double[] weights, int index, double remaining)
+            {
+                if (index == n - 1)
+                {
+                    weights[index] = remaining;
+
+                    if (!useTransparentBase)
+                    {
+                        double white = weights[4];
+                        double colorants = weights.Take(4).Sum() + weights.Skip(5).Sum();
+                        if (white < 0.6 || colorants > 0.4) return;
+                    }
+
+                    double mixedR = 0, mixedG = 0, mixedB = 0;
+                    for (int i = 0; i < n; i++)
+                    {
+                        mixedR += weights[i] * pigments[i].Rgb[0];
+                        mixedG += weights[i] * pigments[i].Rgb[1];
+                        mixedB += weights[i] * pigments[i].Rgb[2];
+                    }
+
+                    double error = Math.Sqrt(
+                        (mixedR - targetRgb[0]) * (mixedR - targetRgb[0]) +
+                        (mixedG - targetRgb[1]) * (mixedG - targetRgb[1]) +
+                        (mixedB - targetRgb[2]) * (mixedB - targetRgb[2])
+                    );
+
+                    if (error < minError)
+                    {
+                        minError = error;
+                        Array.Copy(weights, bestWeights, n);
+                    }
+
+                    return;
+                }
+
+                for (double v = 0; v <= remaining; v += step)
+                {
+                    weights[index] = v;
+                    Recurse(weights, index + 1, remaining - v);
+                }
+            }
+
+            Recurse(new double[n], 0, 1.0);
+
+            double totalWeight = Vbox.Text.ToDouble();
+            resultBox.Clear();
+            //resultBox.AppendText($"Цвет: #{selectedColor.R:X2}{selectedColor.G:X2}{selectedColor.B:X2}\n");
+            resultBox.AppendText($"База: {(useTransparentBase ? "Прозрачная" : "Белая")}\n\n");
+
+            var outputs = new List<string>();
+
+            for (int i = 0; i < n; i++)
+            {
+                if (i == 4) continue; // Пропускаем белый, добавим позже
+                double amount = bestWeights[i] * totalWeight;
+                if (useTransparentBase) amount /= 10;
+
+                if (amount > 0.01)
+                {
+                    outputs.Add($"{pigments[i].Name}: {amount:F2} г");
+                }
+            }
+
+            // Белый добавляется в конце
+            double whiteAmount = bestWeights[4] * totalWeight;
+            if (useTransparentBase)
+            {
+                double colorantsSum = bestWeights.Where((_, i) => i != 4).Sum();
+                whiteAmount = totalWeight - (colorantsSum * totalWeight / 10);
+            }
+
+            if (whiteAmount > 0.01)
+            {
+                outputs.Add($"{pigments[4].Name}: {whiteAmount:F2} г");
+            }
+
+            foreach (string line in outputs)
+            {
+                resultBox.AppendText(line + "\n");
+            }
+
+            colerAnswLabel.Text = $"Подобрано: #{selectedColor.R:X2}{selectedColor.G:X2}{selectedColor.B:X2}";
+        }
+
+
+
+
+
+
+        private void Vbox_TextChanged(object sender, EventArgs e)
+        {
+            colercalc();
+        }
+
+        private void ColorMaker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (ColorMaker.SelectedTab == coler) // или по индексу: tabControl1.SelectedIndex == 1
+            {
+                
+                colercalc();
+            }
         }
     }
 

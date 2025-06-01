@@ -110,7 +110,13 @@
             label15 = new Label();
             panel3 = new Panel();
             button1 = new Button();
-            tabPage3 = new TabPage();
+            coler = new TabPage();
+            resultBox = new RichTextBox();
+            label35 = new Label();
+            BaseTypeLabel = new Label();
+            label29 = new Label();
+            colerAnswLabel = new Label();
+            Vbox = new TextBox();
             colorDialog1 = new ColorDialog();
             menuStrip1 = new MenuStrip();
             выходToolStripMenuItem = new ToolStripMenuItem();
@@ -126,6 +132,7 @@
             ((System.ComponentModel.ISupportInitialize)numericUpDownThreads).BeginInit();
             panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            coler.SuspendLayout();
             menuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -133,13 +140,14 @@
             // 
             ColorMaker.Controls.Add(Converter);
             ColorMaker.Controls.Add(Calc);
-            ColorMaker.Controls.Add(tabPage3);
+            ColorMaker.Controls.Add(coler);
             ColorMaker.Dock = DockStyle.Fill;
             ColorMaker.Location = new Point(0, 24);
             ColorMaker.Name = "ColorMaker";
             ColorMaker.SelectedIndex = 0;
             ColorMaker.Size = new Size(844, 443);
             ColorMaker.TabIndex = 0;
+            ColorMaker.SelectedIndexChanged += ColorMaker_SelectedIndexChanged;
             // 
             // Converter
             // 
@@ -859,7 +867,6 @@
             // 
             VolumeBox.Location = new Point(373, 71);
             VolumeBox.Name = "VolumeBox";
-            VolumeBox.ReadOnly = true;
             VolumeBox.Size = new Size(46, 23);
             VolumeBox.TabIndex = 21;
             VolumeBox.Text = "0";
@@ -868,16 +875,16 @@
             // 
             PriceBox.Location = new Point(270, 71);
             PriceBox.Name = "PriceBox";
-            PriceBox.ReadOnly = true;
             PriceBox.Size = new Size(46, 23);
             PriceBox.TabIndex = 20;
             PriceBox.Text = "0";
             // 
             // pictureBox1
             // 
-            pictureBox1.Location = new Point(623, 97);
+            pictureBox1.Location = new Point(680, 87);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(144, 146);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 19;
             pictureBox1.TabStop = false;
             // 
@@ -971,15 +978,77 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click_1;
             // 
-            // tabPage3
+            // coler
             // 
-            tabPage3.Location = new Point(4, 24);
-            tabPage3.Name = "tabPage3";
-            tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(836, 415);
-            tabPage3.TabIndex = 2;
-            tabPage3.Text = "Колеровка";
-            tabPage3.UseVisualStyleBackColor = true;
+            coler.Controls.Add(resultBox);
+            coler.Controls.Add(label35);
+            coler.Controls.Add(BaseTypeLabel);
+            coler.Controls.Add(label29);
+            coler.Controls.Add(colerAnswLabel);
+            coler.Controls.Add(Vbox);
+            coler.Location = new Point(4, 24);
+            coler.Name = "coler";
+            coler.Padding = new Padding(3);
+            coler.Size = new Size(836, 415);
+            coler.TabIndex = 2;
+            coler.Text = "Колеровка";
+            coler.UseVisualStyleBackColor = true;
+            // 
+            // resultBox
+            // 
+            resultBox.BorderStyle = BorderStyle.None;
+            resultBox.Location = new Point(473, 29);
+            resultBox.Name = "resultBox";
+            resultBox.Size = new Size(355, 204);
+            resultBox.TabIndex = 16;
+            resultBox.Text = "";
+            // 
+            // label35
+            // 
+            label35.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            label35.AutoSize = true;
+            label35.Location = new Point(114, 11);
+            label35.Name = "label35";
+            label35.Size = new Size(12, 15);
+            label35.TabIndex = 15;
+            label35.Text = "г";
+            // 
+            // BaseTypeLabel
+            // 
+            BaseTypeLabel.AutoSize = true;
+            BaseTypeLabel.Location = new Point(229, 32);
+            BaseTypeLabel.Name = "BaseTypeLabel";
+            BaseTypeLabel.Size = new Size(12, 15);
+            BaseTypeLabel.TabIndex = 14;
+            BaseTypeLabel.Text = "-";
+            // 
+            // label29
+            // 
+            label29.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            label29.AutoSize = true;
+            label29.Location = new Point(768, 11);
+            label29.Name = "label29";
+            label29.Size = new Size(60, 15);
+            label29.TabIndex = 3;
+            label29.Text = "Результат";
+            // 
+            // colerAnswLabel
+            // 
+            colerAnswLabel.AutoSize = true;
+            colerAnswLabel.Location = new Point(8, 32);
+            colerAnswLabel.Name = "colerAnswLabel";
+            colerAnswLabel.Size = new Size(12, 15);
+            colerAnswLabel.TabIndex = 2;
+            colerAnswLabel.Text = "-";
+            // 
+            // Vbox
+            // 
+            Vbox.Location = new Point(8, 6);
+            Vbox.Name = "Vbox";
+            Vbox.Size = new Size(100, 23);
+            Vbox.TabIndex = 0;
+            Vbox.Text = "100";
+            Vbox.TextChanged += Vbox_TextChanged;
             // 
             // menuStrip1
             // 
@@ -1049,6 +1118,8 @@
             panel4.ResumeLayout(false);
             panel4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            coler.ResumeLayout(false);
+            coler.PerformLayout();
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
             ResumeLayout(false);
@@ -1060,7 +1131,7 @@
         private TabControl ColorMaker;
         private TabPage Converter;
         private TabPage Calc;
-        private TabPage tabPage3;
+        private TabPage coler;
         private Button pipette;
         private Button ColorPic;
         private ColorDialog colorDialog1;
@@ -1149,5 +1220,11 @@
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel toolStripStatusLabel1;
         private ToolStripMenuItem лицензияToolStripMenuItem;
+        private TextBox Vbox;
+        private Label label29;
+        private Label colerAnswLabel;
+        private Label BaseTypeLabel;
+        private Label label35;
+        private RichTextBox resultBox;
     }
 }
