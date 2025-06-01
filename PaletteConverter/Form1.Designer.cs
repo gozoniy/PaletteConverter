@@ -31,6 +31,7 @@
             components = new System.ComponentModel.Container();
             ColorMaker = new TabControl();
             Converter = new TabPage();
+            AvgTimeLabel = new Label();
             PreviewButton = new Button();
             ScreenColorButton = new Button();
             label10 = new Label();
@@ -61,6 +62,13 @@
             pipette = new Button();
             ColorPic = new Button();
             Calc = new TabPage();
+            label28 = new Label();
+            numericUpDown1 = new NumericUpDown();
+            button3 = new Button();
+            button2 = new Button();
+            label27 = new Label();
+            numericUpDownThreads = new NumericUpDown();
+            ParseAllButton = new Button();
             label26 = new Label();
             BrandBox = new ComboBox();
             label25 = new Label();
@@ -105,14 +113,17 @@
             tabPage3 = new TabPage();
             colorDialog1 = new ColorDialog();
             menuStrip1 = new MenuStrip();
+            выходToolStripMenuItem = new ToolStripMenuItem();
             оПрограммеToolStripMenuItem = new ToolStripMenuItem();
             менеджерПлагиновToolStripMenuItem = new ToolStripMenuItem();
-            выходToolStripMenuItem = new ToolStripMenuItem();
+            директорияToolStripMenuItem = new ToolStripMenuItem();
+            лицензияToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStrip1 = new ContextMenuStrip(components);
-            AvgTimeLabel = new Label();
             ColorMaker.SuspendLayout();
             Converter.SuspendLayout();
             Calc.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownThreads).BeginInit();
             panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             menuStrip1.SuspendLayout();
@@ -127,7 +138,7 @@
             ColorMaker.Location = new Point(0, 24);
             ColorMaker.Name = "ColorMaker";
             ColorMaker.SelectedIndex = 0;
-            ColorMaker.Size = new Size(783, 443);
+            ColorMaker.Size = new Size(844, 443);
             ColorMaker.TabIndex = 0;
             // 
             // Converter
@@ -165,10 +176,19 @@
             Converter.Location = new Point(4, 24);
             Converter.Name = "Converter";
             Converter.Padding = new Padding(3);
-            Converter.Size = new Size(775, 415);
+            Converter.Size = new Size(836, 415);
             Converter.TabIndex = 0;
             Converter.Text = "Конвертер цветов";
             Converter.UseVisualStyleBackColor = true;
+            // 
+            // AvgTimeLabel
+            // 
+            AvgTimeLabel.AutoSize = true;
+            AvgTimeLabel.Location = new Point(322, 121);
+            AvgTimeLabel.Name = "AvgTimeLabel";
+            AvgTimeLabel.Size = new Size(12, 15);
+            AvgTimeLabel.TabIndex = 29;
+            AvgTimeLabel.Text = "-";
             // 
             // PreviewButton
             // 
@@ -445,6 +465,13 @@
             // 
             // Calc
             // 
+            Calc.Controls.Add(label28);
+            Calc.Controls.Add(numericUpDown1);
+            Calc.Controls.Add(button3);
+            Calc.Controls.Add(button2);
+            Calc.Controls.Add(label27);
+            Calc.Controls.Add(numericUpDownThreads);
+            Calc.Controls.Add(ParseAllButton);
             Calc.Controls.Add(label26);
             Calc.Controls.Add(BrandBox);
             Calc.Controls.Add(label25);
@@ -478,10 +505,81 @@
             Calc.Location = new Point(4, 24);
             Calc.Name = "Calc";
             Calc.Padding = new Padding(3);
-            Calc.Size = new Size(775, 415);
+            Calc.Size = new Size(836, 415);
             Calc.TabIndex = 1;
             Calc.Text = "Калькулятор краски";
             Calc.UseVisualStyleBackColor = true;
+            Calc.Click += Calc_Click;
+            // 
+            // label28
+            // 
+            label28.AutoSize = true;
+            label28.Location = new Point(773, 3);
+            label28.Name = "label28";
+            label28.Size = new Size(51, 15);
+            label28.TabIndex = 47;
+            label28.Text = "Сон, ms";
+            // 
+            // numericUpDown1
+            // 
+            numericUpDown1.Increment = new decimal(new int[] { 100, 0, 0, 0 });
+            numericUpDown1.Location = new Point(773, 18);
+            numericUpDown1.Maximum = new decimal(new int[] { 5000, 0, 0, 0 });
+            numericUpDown1.Minimum = new decimal(new int[] { 100, 0, 0, 0 });
+            numericUpDown1.Name = "numericUpDown1";
+            numericUpDown1.Size = new Size(54, 23);
+            numericUpDown1.TabIndex = 46;
+            numericUpDown1.Value = new decimal(new int[] { 1000, 0, 0, 0 });
+            numericUpDown1.ValueChanged += numericUpDown1_ValueChanged;
+            // 
+            // button3
+            // 
+            button3.Location = new Point(810, 46);
+            button3.Name = "button3";
+            button3.Size = new Size(23, 23);
+            button3.TabIndex = 45;
+            button3.Text = "❌";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
+            // 
+            // button2
+            // 
+            button2.Location = new Point(603, 18);
+            button2.Name = "button2";
+            button2.Size = new Size(23, 23);
+            button2.TabIndex = 44;
+            button2.Text = "?";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
+            // 
+            // label27
+            // 
+            label27.AutoSize = true;
+            label27.Location = new Point(713, 3);
+            label27.Name = "label27";
+            label27.Size = new Size(54, 15);
+            label27.TabIndex = 43;
+            label27.Text = "Потоков";
+            // 
+            // numericUpDownThreads
+            // 
+            numericUpDownThreads.Location = new Point(713, 18);
+            numericUpDownThreads.Maximum = new decimal(new int[] { 16, 0, 0, 0 });
+            numericUpDownThreads.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numericUpDownThreads.Name = "numericUpDownThreads";
+            numericUpDownThreads.Size = new Size(54, 23);
+            numericUpDownThreads.TabIndex = 42;
+            numericUpDownThreads.Value = new decimal(new int[] { 4, 0, 0, 0 });
+            // 
+            // ParseAllButton
+            // 
+            ParseAllButton.Location = new Point(632, 18);
+            ParseAllButton.Name = "ParseAllButton";
+            ParseAllButton.Size = new Size(75, 23);
+            ParseAllButton.TabIndex = 41;
+            ParseAllButton.Text = "Найти все";
+            ParseAllButton.UseVisualStyleBackColor = true;
+            ParseAllButton.Click += ParseAllButton_Click;
             // 
             // label26
             // 
@@ -496,7 +594,7 @@
             // 
             BrandBox.DropDownStyle = ComboBoxStyle.DropDownList;
             BrandBox.FormattingEnabled = true;
-            BrandBox.Location = new Point(373, 21);
+            BrandBox.Location = new Point(356, 18);
             BrandBox.Name = "BrandBox";
             BrandBox.Size = new Size(121, 23);
             BrandBox.TabIndex = 39;
@@ -504,7 +602,7 @@
             // label25
             // 
             label25.AutoSize = true;
-            label25.Location = new Point(373, 3);
+            label25.Location = new Point(356, 3);
             label25.Name = "label25";
             label25.Size = new Size(92, 15);
             label25.TabIndex = 38;
@@ -787,15 +885,16 @@
             // 
             comboBox5.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox5.FormattingEnabled = true;
-            comboBox5.Location = new Point(310, 47);
+            comboBox5.Location = new Point(229, 47);
+            comboBox5.MaxDropDownItems = 16;
             comboBox5.Name = "comboBox5";
-            comboBox5.Size = new Size(457, 23);
+            comboBox5.Size = new Size(575, 23);
             comboBox5.TabIndex = 18;
             comboBox5.SelectedIndexChanged += comboBox5_SelectedIndexChanged;
             // 
             // ParseButton
             // 
-            ParseButton.Location = new Point(229, 47);
+            ParseButton.Location = new Point(483, 18);
             ParseButton.Name = "ParseButton";
             ParseButton.Size = new Size(75, 23);
             ParseButton.TabIndex = 17;
@@ -810,7 +909,7 @@
             PaintsBox.Multiline = true;
             PaintsBox.Name = "PaintsBox";
             PaintsBox.ReadOnly = true;
-            PaintsBox.Size = new Size(339, 158);
+            PaintsBox.Size = new Size(400, 158);
             PaintsBox.TabIndex = 16;
             PaintsBox.TextChanged += PaintsBox_TextChanged;
             // 
@@ -827,7 +926,7 @@
             // 
             comboBox4.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox4.FormattingEnabled = true;
-            comboBox4.Location = new Point(229, 21);
+            comboBox4.Location = new Point(229, 18);
             comboBox4.Name = "comboBox4";
             comboBox4.Size = new Size(121, 23);
             comboBox4.TabIndex = 12;
@@ -877,25 +976,33 @@
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(775, 415);
+            tabPage3.Size = new Size(836, 415);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Колеровка";
             tabPage3.UseVisualStyleBackColor = true;
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { оПрограммеToolStripMenuItem, менеджерПлагиновToolStripMenuItem, выходToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { выходToolStripMenuItem, оПрограммеToolStripMenuItem, менеджерПлагиновToolStripMenuItem, директорияToolStripMenuItem, лицензияToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(783, 24);
+            menuStrip1.Size = new Size(844, 24);
             menuStrip1.TabIndex = 1;
             menuStrip1.Text = "menuStrip1";
+            // 
+            // выходToolStripMenuItem
+            // 
+            выходToolStripMenuItem.Name = "выходToolStripMenuItem";
+            выходToolStripMenuItem.Size = new Size(53, 20);
+            выходToolStripMenuItem.Text = "Выход";
+            выходToolStripMenuItem.Click += выходToolStripMenuItem_Click;
             // 
             // оПрограммеToolStripMenuItem
             // 
             оПрограммеToolStripMenuItem.Name = "оПрограммеToolStripMenuItem";
             оПрограммеToolStripMenuItem.Size = new Size(94, 20);
             оПрограммеToolStripMenuItem.Text = "О программе";
+            оПрограммеToolStripMenuItem.Click += оПрограммеToolStripMenuItem_Click;
             // 
             // менеджерПлагиновToolStripMenuItem
             // 
@@ -904,40 +1011,41 @@
             менеджерПлагиновToolStripMenuItem.Text = "Менеджер плагинов";
             менеджерПлагиновToolStripMenuItem.Click += менеджерПлагиновToolStripMenuItem_Click;
             // 
-            // выходToolStripMenuItem
+            // директорияToolStripMenuItem
             // 
-            выходToolStripMenuItem.Name = "выходToolStripMenuItem";
-            выходToolStripMenuItem.Size = new Size(53, 20);
-            выходToolStripMenuItem.Text = "Выход";
+            директорияToolStripMenuItem.Name = "директорияToolStripMenuItem";
+            директорияToolStripMenuItem.Size = new Size(85, 20);
+            директорияToolStripMenuItem.Text = "Директория";
+            директорияToolStripMenuItem.Click += директорияToolStripMenuItem_Click;
+            // 
+            // лицензияToolStripMenuItem
+            // 
+            лицензияToolStripMenuItem.Name = "лицензияToolStripMenuItem";
+            лицензияToolStripMenuItem.Size = new Size(72, 20);
+            лицензияToolStripMenuItem.Text = "Лицензия";
+            лицензияToolStripMenuItem.Click += лицензияToolStripMenuItem_Click;
             // 
             // contextMenuStrip1
             // 
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
             // 
-            // AvgTimeLabel
-            // 
-            AvgTimeLabel.AutoSize = true;
-            AvgTimeLabel.Location = new Point(322, 121);
-            AvgTimeLabel.Name = "AvgTimeLabel";
-            AvgTimeLabel.Size = new Size(44, 15);
-            AvgTimeLabel.TabIndex = 29;
-            AvgTimeLabel.Text = "label27";
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(783, 467);
+            ClientSize = new Size(844, 467);
             Controls.Add(ColorMaker);
             Controls.Add(menuStrip1);
             Name = "Form1";
-            Text = "Form1";
+            Text = "Конвертер палитр";
             ColorMaker.ResumeLayout(false);
             Converter.ResumeLayout(false);
             Converter.PerformLayout();
             Calc.ResumeLayout(false);
             Calc.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numericUpDown1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownThreads).EndInit();
             panel4.ResumeLayout(false);
             panel4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
@@ -1030,5 +1138,16 @@
         private Button PreviewButton;
         private ContextMenuStrip contextMenuStrip1;
         private Label AvgTimeLabel;
+        private Button ParseAllButton;
+        private Label label27;
+        private NumericUpDown numericUpDownThreads;
+        private Button button2;
+        private Button button3;
+        private ToolStripMenuItem директорияToolStripMenuItem;
+        private Label label28;
+        private NumericUpDown numericUpDown1;
+        private StatusStrip statusStrip1;
+        private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripMenuItem лицензияToolStripMenuItem;
     }
 }

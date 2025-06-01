@@ -10,8 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Community.CsharpSqlite.SQLiteClient" Version="3.7.7.3" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
     <PackageReference Include="Selenium.WebDriver" Version="4.32.0" />
+    <PackageReference Include="SQLite" Version="3.13.0" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
+    <PackageReference Include="System.Management" Version="9.0.5" />
     <PackageReference Include="WebDriverManager" Version="2.17.5" />
   </ItemGroup>
 
@@ -24,6 +28,9 @@
     </Reference>
     <Reference Include="ParserContracts">
       <HintPath>..\..\ParserContracts\ParserContracts\bin\Debug\net8.0\ParserContracts.dll</HintPath>
+    </Reference>
+    <Reference Include="ProtectionLib">
+      <HintPath>..\..\ProtectionLib\ProtectionLib\bin\Debug\net8.0-windows\ProtectionLib.dll</HintPath>
     </Reference>
   </ItemGroup>
 

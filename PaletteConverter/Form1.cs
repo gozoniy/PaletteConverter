@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+п»їusing System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Reflection;
@@ -15,7 +15,17 @@ using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using AngleSharp.Text;
 using ParserContracts;
+using System.Collections.Concurrent;
 
+using System.Data.SQLite;
+
+using ProtectionLib;
+using System.ComponentModel;
+
+using System.Management;
+
+using System.IO.Pipes;
+using System.IO;
 
 
 
@@ -32,15 +42,7 @@ namespace PaletteConverter
             public string rgb_hex { get; set; }
             public string name { get; set; }
         }
-        /*
-        public interface IProductParserPlugin
-        {
-            string PluginName { get; }
-            List<string> SupportedBrands { get; }
-            Task<string> LoadPageSourceAsync(string brand);
-            List<ProductInfo> ParseProducts(string html);
-            public string name { get; set; }
-        }*/
+
 
 
 
@@ -51,36 +53,143 @@ namespace PaletteConverter
         static public Dictionary<string, Queue<long>> pluginExecutionTimes = new();
         static public Dictionary<string, double> pluginAverageTimes = new();
 
+        LicenseInfo license = Protection.CheckLicense("license.lic");
+
+        ManagementEventWatcher insertWatcher;
+        ManagementEventWatcher removeWatcher;
+
         public Form1()
         {
+
+            StartWmiUsbMonitoring();
             InitializeComponent();
+            LicCheck();
             comboBox3.SelectedIndex = 0;
 
 
-            comboBox2.DrawMode = DrawMode.OwnerDrawFixed;  // Включаем кастомную отрисовку
-            comboBox2.DrawItem += comboBox2_DrawItem;     // Подписываемся на событие DrawItem
+            comboBox2.DrawMode = DrawMode.OwnerDrawFixed;  // Р’РєР»СЋС‡Р°РµРј РєР°СЃС‚РѕРјРЅСѓСЋ РѕС‚СЂРёСЃРѕРІРєСѓ
+            comboBox2.DrawItem += comboBox2_DrawItem;     // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° СЃРѕР±С‹С‚РёРµ DrawItem
 
             var pluginManagerForm = new PluginManagerForm();
 
-            // Подписываемся на событие загрузки плагинов
+            // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° СЃРѕР±С‹С‚РёРµ Р·Р°РіСЂСѓР·РєРё РїР»Р°РіРёРЅРѕРІ
             //pluginManagerForm.PluginsLoaded += OnPluginsLoaded;
 
-            // Показываем форму менеджера плагинов
+            // РџРѕРєР°Р·С‹РІР°РµРј С„РѕСЂРјСѓ РјРµРЅРµРґР¶РµСЂР° РїР»Р°РіРёРЅРѕРІ
             //pluginManagerForm.Show();
             refreshPlugins();
             LoadEnabledPluginNames();
 
 
-
+            EnsureLogTableExists();
             comboBox6.SelectedIndex = 0;
         }
 
+        private void StartWmiUsbMonitoring()
+        {
+            var insertQuery = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 2");
+            var removeQuery = new WqlEventQuery("SELECT * FROM Win32_DeviceChangeEvent WHERE EventType = 3");
 
+            insertWatcher = new ManagementEventWatcher(insertQuery);
+            removeWatcher = new ManagementEventWatcher(removeQuery);
+
+            DateTime lastRemoveEventTime = DateTime.MinValue;
+            DateTime LastInsertEventTime = DateTime.MinValue;
+            insertWatcher.EventArrived += (s, e) =>
+            {
+                var now = DateTime.Now;
+
+                if ((now - LastInsertEventTime).TotalSeconds > 3)
+                {
+                    Invoke(() =>
+                    {
+                        //MessageBox.Show("USB РїРѕРґРєР»СЋС‡РµРЅ");
+                        LicCheck();
+                    });
+
+                }
+            };
+
+            removeWatcher.EventArrived += (s, e) =>
+            {
+                var now = DateTime.Now;
+                if ((now - lastRemoveEventTime).TotalSeconds > 3)
+                {
+                    lastRemoveEventTime = now;
+                    Invoke(() =>
+                    {
+                        //MessageBox.Show("USB РѕС‚РєР»СЋС‡РµРЅ");
+                        LicCheck();
+                    });
+                }
+            };
+
+            insertWatcher.Start();
+            removeWatcher.Start();
+        }
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            insertWatcher?.Stop();
+            insertWatcher?.Dispose();
+            removeWatcher?.Stop();
+            removeWatcher?.Dispose();
+            base.OnFormClosing(e);
+
+        }
+
+        public static void ReportToDebugger(string message)
+        {
+            try
+            {
+                using var client = new NamedPipeClientStream(".", "LicensePipe", PipeDirection.Out);
+                client.Connect(1000); // timeout ms
+                using var writer = new StreamWriter(client) { AutoFlush = true };
+                writer.WriteLine(message);
+            }
+            catch
+            {
+                // РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕРґРєР»СЋС‡РёС‚СЊСЃСЏ вЂ” РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ
+            }
+        }
+
+        private void LicCheck()
+        {
+            license = Protection.CheckLicense("license.lic");
+            ReportToDebugger($"РџСЂРѕРІРµСЂРєР° Р»РёС†РµРЅР·РёРё: {license.Status}, SN={license.UsbSerial}");
+            if (license.Status == LicenseStatus.Valid)
+            {
+                if (!ColorMaker.TabPages.Contains(Calc))
+                {
+                    ColorMaker.TabPages.Insert(1, Calc);
+                }
+                this.Text = "РљРѕРЅРІРµСЂС‚РµСЂ РїР°Р»РёС‚СЂ";
+
+            }
+            else if (license.Status == LicenseStatus.Expired)
+            {
+                ColorMaker.TabPages.Remove(Calc); // РЈРґР°Р»РёС‚СЊ РІРєР»Р°РґРєСѓ
+                this.Text = "РљРѕРЅРІРµСЂС‚РµСЂ РїР°Р»РёС‚СЂ - Р›РёС†РµРЅР·РёСЏ РёСЃС‚РµРєР»Р°";
+
+                //MessageBox.Show("РЎСЂРѕРє РґРµР№СЃС‚РІРёСЏ Р»РёС†РµРЅР·РёРё РёСЃС‚С‘Рє!");
+            }
+            else if (license.Status == LicenseStatus.Invalid)
+            {
+                ColorMaker.TabPages.Remove(Calc); // РЈРґР°Р»РёС‚СЊ РІРєР»Р°РґРєСѓ
+                this.Text = "РљРѕРЅРІРµСЂС‚РµСЂ РїР°Р»РёС‚СЂ - Р›РёС†РµРЅР·РёСЏ РЅРµРґРµР№СЃС‚РІРёС‚РµР»СЊРЅР°";
+                //MessageBox.Show("Р›РёС†РµРЅР·РёСЏ РЅРµРґРµР№СЃС‚РІРёС‚РµР»СЊРЅР°!");
+            }
+            else
+            {
+                ColorMaker.TabPages.Remove(Calc); // РЈРґР°Р»РёС‚СЊ РІРєР»Р°РґРєСѓ
+                this.Text = "РљРѕРЅРІРµСЂС‚РµСЂ РїР°Р»РёС‚СЂ - Р”РµРјРѕРЅСЃС‚СЂР°С†РёРѕРЅРЅС‹Р№ СЂРµР¶РёРј";
+                //essageBox.Show("Р—Р°РїСѓС‰РµРЅРѕ РІ РґРµРјРѕ-СЂРµР¶РёРјРµ.");
+            }
+        }
         private void LoadEnabledPluginNames()
         {
             if (!File.Exists(enabledPluginsFile))
             {
-                MessageBox.Show("Файл с активными плагинами не найден.");
+                MessageBox.Show("Р¤Р°Р№Р» СЃ Р°РєС‚РёРІРЅС‹РјРё РїР»Р°РіРёРЅР°РјРё РЅРµ РЅР°Р№РґРµРЅ.");
                 return;
             }
 
@@ -103,23 +212,23 @@ namespace PaletteConverter
         private void ColorPic1()
         {
             {
-                // Создаем диалог выбора цвета
+                // РЎРѕР·РґР°РµРј РґРёР°Р»РѕРі РІС‹Р±РѕСЂР° С†РІРµС‚Р°
                 ColorDialog colorDialog = new ColorDialog();
 
-                // Опционально: устанавливаем начальный цвет (например, текущий цвет panel1)
+                // РћРїС†РёРѕРЅР°Р»СЊРЅРѕ: СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅР°С‡Р°Р»СЊРЅС‹Р№ С†РІРµС‚ (РЅР°РїСЂРёРјРµСЂ, С‚РµРєСѓС‰РёР№ С†РІРµС‚ panel1)
                 colorDialog.Color = panel1.BackColor;
 
-                // Показываем диалог и проверяем, что пользователь нажал OK
+                // РџРѕРєР°Р·С‹РІР°РµРј РґРёР°Р»РѕРі Рё РїСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°Р¶Р°Р» OK
                 if (colorDialog.ShowDialog() == DialogResult.OK)
                 {
-                    // Устанавливаем выбранный цвет для panel1
+                    // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІС‹Р±СЂР°РЅРЅС‹Р№ С†РІРµС‚ РґР»СЏ panel1
                     panel1.BackColor = colorDialog.Color;
 
-                    // Опционально: выводим HEX-код цвета (если нужно)
+                    // РћРїС†РёРѕРЅР°Р»СЊРЅРѕ: РІС‹РІРѕРґРёРј HEX-РєРѕРґ С†РІРµС‚Р° (РµСЃР»Рё РЅСѓР¶РЅРѕ)
                     string hexColor = "#" + colorDialog.Color.R.ToString("X2")
                                             + colorDialog.Color.G.ToString("X2")
                                             + colorDialog.Color.B.ToString("X2");
-                    //MessageBox.Show("Выбран цвет: " + hexColor);
+                    //MessageBox.Show("Р’С‹Р±СЂР°РЅ С†РІРµС‚: " + hexColor);
                     CurrentColorHEX.Text = hexColor;
                     ColR.Text = colorDialog.Color.R.ToString();
                     ColG.Text = colorDialog.Color.G.ToString();
@@ -138,10 +247,10 @@ namespace PaletteConverter
         {
             var pipetteForm = new PipetteForm();
 
-            // Подписываемся на событие выбора цвета
+            // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° СЃРѕР±С‹С‚РёРµ РІС‹Р±РѕСЂР° С†РІРµС‚Р°
             pipetteForm.ColorPicked += color =>
             {
-                // Обновляем интерфейс в реальном времени
+                // РћР±РЅРѕРІР»СЏРµРј РёРЅС‚РµСЂС„РµР№СЃ РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё
                 panel1.BackColor = color;
                 CurrentColorHEX.Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
                 ColR.Text = color.R.ToString();
@@ -150,10 +259,10 @@ namespace PaletteConverter
                 FindClosestColor();
             };
 
-            // Показываем форму как НЕМОДАЛЬНОЕ окно
+            // РџРѕРєР°Р·С‹РІР°РµРј С„РѕСЂРјСѓ РєР°Рє РќР•РњРћР”РђР›Р¬РќРћР• РѕРєРЅРѕ
             pipetteForm.Show();
 
-            // Опционально: закрытие при закрытии формы-пипетки
+            // РћРїС†РёРѕРЅР°Р»СЊРЅРѕ: Р·Р°РєСЂС‹С‚РёРµ РїСЂРё Р·Р°РєСЂС‹С‚РёРё С„РѕСЂРјС‹-РїРёРїРµС‚РєРё
             pipetteForm.FormClosed += (s, args) => pipetteForm.Dispose();
         }
 
@@ -177,53 +286,53 @@ namespace PaletteConverter
         }
         private void comboBox2_DrawItem(object sender, DrawItemEventArgs e)
         {
-            if (e.Index < 0) return;  // Проверяем на допустимый индекс
+            if (e.Index < 0) return;  // РџСЂРѕРІРµСЂСЏРµРј РЅР° РґРѕРїСѓСЃС‚РёРјС‹Р№ РёРЅРґРµРєСЃ
 
             var comboBox = sender as ComboBox;
             string itemText = comboBox.Items[e.Index].ToString();
 
-            // Извлекаем HEX код цвета (он должен быть в конце строки)
+            // РР·РІР»РµРєР°РµРј HEX РєРѕРґ С†РІРµС‚Р° (РѕРЅ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІ РєРѕРЅС†Рµ СЃС‚СЂРѕРєРё)
             string hexColor = itemText.Substring(itemText.LastIndexOf(" - ") + 3);
 
-            // Проверяем, что это валидный HEX код
-            if (hexColor.Length == 6 || hexColor.Length == 7) // 6 символов без `#` или 7 с `#`
+            // РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ СЌС‚Рѕ РІР°Р»РёРґРЅС‹Р№ HEX РєРѕРґ
+            if (hexColor.Length == 6 || hexColor.Length == 7) // 6 СЃРёРјРІРѕР»РѕРІ Р±РµР· `#` РёР»Рё 7 СЃ `#`
             {
                 try
                 {
-                    // Если HEX код не начинается с '#', добавляем его
+                    // Р•СЃР»Рё HEX РєРѕРґ РЅРµ РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ '#', РґРѕР±Р°РІР»СЏРµРј РµРіРѕ
                     if (hexColor[0] != '#')
                     {
                         hexColor = "#" + hexColor;
                     }
 
-                    // Преобразуем в цвет с учетом добавленной решетки
+                    // РџСЂРµРѕР±СЂР°Р·СѓРµРј РІ С†РІРµС‚ СЃ СѓС‡РµС‚РѕРј РґРѕР±Р°РІР»РµРЅРЅРѕР№ СЂРµС€РµС‚РєРё
                     Color color = ColorTranslator.FromHtml(hexColor);
-                    e.Graphics.FillRectangle(new SolidBrush(color), e.Bounds);  // Закрашиваем фон цветом
+                    e.Graphics.FillRectangle(new SolidBrush(color), e.Bounds);  // Р—Р°РєСЂР°С€РёРІР°РµРј С„РѕРЅ С†РІРµС‚РѕРј
 
-                    // Определяем яркость фона
+                    // РћРїСЂРµРґРµР»СЏРµРј СЏСЂРєРѕСЃС‚СЊ С„РѕРЅР°
                     int brightness = (int)(0.2126 * color.R + 0.7152 * color.G + 0.0722 * color.B);
 
-                    // Если яркость низкая (темный цвет), используем белый текст
+                    // Р•СЃР»Рё СЏСЂРєРѕСЃС‚СЊ РЅРёР·РєР°СЏ (С‚РµРјРЅС‹Р№ С†РІРµС‚), РёСЃРїРѕР»СЊР·СѓРµРј Р±РµР»С‹Р№ С‚РµРєСЃС‚
                     Brush textBrush = brightness < 128 ? Brushes.White : Brushes.Black;
 
-                    // Рисуем текст на фоне
+                    // Р РёСЃСѓРµРј С‚РµРєСЃС‚ РЅР° С„РѕРЅРµ
                     e.Graphics.DrawString(itemText, e.Font, textBrush, e.Bounds.Left, e.Bounds.Top);
                 }
                 catch
                 {
-                    // Если произошла ошибка, оставляем стандартный фон
+                    // Р•СЃР»Рё РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°, РѕСЃС‚Р°РІР»СЏРµРј СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ С„РѕРЅ
                     e.Graphics.FillRectangle(Brushes.White, e.Bounds);
                     e.Graphics.DrawString(itemText, e.Font, Brushes.Black, e.Bounds.Left, e.Bounds.Top);
                 }
             }
             else
             {
-                // Если HEX код некорректный, используем стандартный фон
+                // Р•СЃР»Рё HEX РєРѕРґ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№, РёСЃРїРѕР»СЊР·СѓРµРј СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ С„РѕРЅ
                 e.Graphics.FillRectangle(Brushes.White, e.Bounds);
                 e.Graphics.DrawString(itemText, e.Font, Brushes.Black, e.Bounds.Left, e.Bounds.Top);
             }
 
-            e.DrawFocusRectangle();  // Отрисовываем фокус при выделении элемента
+            e.DrawFocusRectangle();  // РћС‚СЂРёСЃРѕРІС‹РІР°РµРј С„РѕРєСѓСЃ РїСЂРё РІС‹РґРµР»РµРЅРёРё СЌР»РµРјРµРЅС‚Р°
         }
 
 
@@ -235,7 +344,7 @@ namespace PaletteConverter
         }
         private static List<IColorPalettePlugin> loadedPlugins = new();
         private static List<IProductParserPlugin> loadedParsers = new();
-        private void менеджерПлагиновToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РјРµРЅРµРґР¶РµСЂРџР»Р°РіРёРЅРѕРІToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var manager = new PluginManagerForm();
             manager.ShowDialog();
@@ -253,7 +362,7 @@ namespace PaletteConverter
         {
             //var manager = new PluginManagerForm();
 
-            //MessageBox.Show("Плагины обновлены");
+            //MessageBox.Show("РџР»Р°РіРёРЅС‹ РѕР±РЅРѕРІР»РµРЅС‹");
             //manager.LoadPlugins();
             //manager.LoadEnabledPlugins();
             loadedPlugins = PluginManagerForm.GetEnabledPalettes();
@@ -274,34 +383,34 @@ namespace PaletteConverter
             if (comboBox1.SelectedIndex == -1 || comboBox2.SelectedIndex == -1)
                 return;
 
-            // Получаем имя выбранного плагина
+            // РџРѕР»СѓС‡Р°РµРј РёРјСЏ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РїР»Р°РіРёРЅР°
             string selectedPluginName = comboBox1.SelectedItem.ToString();
 
-            // Находим соответствующий плагин
+            // РќР°С…РѕРґРёРј СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РїР»Р°РіРёРЅ
             var plugin = loadedPlugins.FirstOrDefault(p => p.Name == selectedPluginName);
             if (plugin == null)
                 return;
 
-            // Загружаем цвета из плагина
+            // Р—Р°РіСЂСѓР¶Р°РµРј С†РІРµС‚Р° РёР· РїР»Р°РіРёРЅР°
             var colors = plugin.LoadColors();
 
-            // Извлекаем код цвета (до дефиса)
+            // РР·РІР»РµРєР°РµРј РєРѕРґ С†РІРµС‚Р° (РґРѕ РґРµС„РёСЃР°)
             var selected = comboBox2.SelectedItem.ToString();
             var code = selected.Split('-')[0].Trim();
 
             if (colors.TryGetValue(code, out var color))
             {
-                // Устанавливаем цвет панели
+                // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј С†РІРµС‚ РїР°РЅРµР»Рё
                 try
                 {
                     panel2.BackColor = ColorTranslator.FromHtml(color.rgb_hex);
                 }
                 catch
                 {
-                    MessageBox.Show($"Ошибка преобразования HEX: {color.rgb_hex}");
+                    MessageBox.Show($"РћС€РёР±РєР° РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёСЏ HEX: {color.rgb_hex}");
                 }
 
-                // Обновляем поля
+                // РћР±РЅРѕРІР»СЏРµРј РїРѕР»СЏ
                 AnalogColorHEX.Text = color.rgb_hex;
 
                 var rgbParts = color.rgb_approx.Split('-');
@@ -326,7 +435,7 @@ namespace PaletteConverter
             double avg = queue.Average();
 
             pluginAverageTimes[pluginId] = avg;
-            AvgTimeLabel.Text = $"Среднее время: {avg:F2} мс";
+            AvgTimeLabel.Text = $"РЎСЂРµРґРЅРµРµ РІСЂРµРјСЏ: {avg:F2} РјСЃ";
         }
 
         public void FindClosestColor(int flag = 0)
@@ -339,22 +448,22 @@ namespace PaletteConverter
             if (plugin == null)
                 return;
 
-            // ДОБАВИТЬ: Измерение времени выполнения загрузки цветов
+            // Р”РћР‘РђР’РРўР¬: РР·РјРµСЂРµРЅРёРµ РІСЂРµРјРµРЅРё РІС‹РїРѕР»РЅРµРЅРёСЏ Р·Р°РіСЂСѓР·РєРё С†РІРµС‚РѕРІ
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var colors = plugin.LoadColors();
             stopwatch.Stop();
             elapsedMs = stopwatch.ElapsedMilliseconds;
-            // Добавить сохранение времени выполнения
+            // Р”РѕР±Р°РІРёС‚СЊ СЃРѕС…СЂР°РЅРµРЅРёРµ РІСЂРµРјРµРЅРё РІС‹РїРѕР»РЅРµРЅРёСЏ
             if (!pluginExecutionTimes.ContainsKey(plugin.Name))
                 pluginExecutionTimes[plugin.Name] = new Queue<long>();
 
             var queue = pluginExecutionTimes[plugin.Name];
-            if (queue.Count >= 20) // максимум 20 последних измерений
+            if (queue.Count >= 20) // РјР°РєСЃРёРјСѓРј 20 РїРѕСЃР»РµРґРЅРёС… РёР·РјРµСЂРµРЅРёР№
                 queue.Dequeue();
 
             queue.Enqueue(elapsedMs);
             UpdateAverageTime(plugin.Name);
-            // Преобразуем HEX в Color
+            // РџСЂРµРѕР±СЂР°Р·СѓРµРј HEX РІ Color
             Color targetColor;
             try
             {
@@ -362,7 +471,7 @@ namespace PaletteConverter
             }
             catch
             {
-                MessageBox.Show("Неверный HEX-код цвета.");
+                MessageBox.Show("РќРµРІРµСЂРЅС‹Р№ HEX-РєРѕРґ С†РІРµС‚Р°.");
                 return;
             }
 
@@ -370,7 +479,7 @@ namespace PaletteConverter
             string closestCode = null;
             PalettePluginContracts.PaletteColor closestColor = null;
 
-            // Получаем выбранный метод сравнения из comboBox3
+            // РџРѕР»СѓС‡Р°РµРј РІС‹Р±СЂР°РЅРЅС‹Р№ РјРµС‚РѕРґ СЃСЂР°РІРЅРµРЅРёСЏ РёР· comboBox3
             string comparisonMethod = comboBox3.SelectedItem?.ToString() ?? "RGB";
             if (flag == 0)
             {
@@ -386,7 +495,7 @@ namespace PaletteConverter
                     }
                     catch
                     {
-                        continue; // пропустить некорректный цвет
+                        continue; // РїСЂРѕРїСѓСЃС‚РёС‚СЊ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ С†РІРµС‚
                     }
 
                     int dist;
@@ -399,7 +508,7 @@ namespace PaletteConverter
                             dist = ColorDistanceLab(targetColor, colorInPalette);
                             break;
                         case "HLC":
-                        case "LCH": // допустим синоним
+                        case "LCH": // РґРѕРїСѓСЃС‚РёРј СЃРёРЅРѕРЅРёРј
                             dist = ColorDistanceLch(targetColor, colorInPalette);
                             break;
                         default:
@@ -430,7 +539,7 @@ namespace PaletteConverter
                         dist = ColorDistanceLab(targetColor, colorInPalette);
                         break;
                     case "HLC":
-                    case "LCH": // допустим синоним
+                    case "LCH": // РґРѕРїСѓСЃС‚РёРј СЃРёРЅРѕРЅРёРј
                         dist = ColorDistanceLch(targetColor, colorInPalette);
                         break;
                     default:
@@ -451,7 +560,7 @@ namespace PaletteConverter
 
                 if (closestCode != null && closestColor != null)
                 {
-                    // Показываем результат
+                    // РџРѕРєР°Р·С‹РІР°РµРј СЂРµР·СѓР»СЊС‚Р°С‚
                     for (int i = 0; i < comboBox2.Items.Count; i++)
                     {
                         var item = comboBox2.Items[i].ToString();
@@ -467,7 +576,7 @@ namespace PaletteConverter
                 }
                 else
                 {
-                    MessageBox.Show("Не удалось найти подходящий цвет.");
+                    MessageBox.Show("РќРµ СѓРґР°Р»РѕСЃСЊ РЅР°Р№С‚Рё РїРѕРґС…РѕРґСЏС‰РёР№ С†РІРµС‚.");
                     similarityBox.Text = "";
                 }
             }
@@ -478,12 +587,12 @@ namespace PaletteConverter
             double similarity;
             double maxDistance = GetMaxDistance(comparisonMethod);
             similarity = 100.0 - (minDistance * 100.0 / maxDistance);
-            similarity = Math.Clamp(similarity, 0, 100); // чтобы не вылезло за границы
+            similarity = Math.Clamp(similarity, 0, 100); // С‡С‚РѕР±С‹ РЅРµ РІС‹Р»РµР·Р»Рѕ Р·Р° РіСЂР°РЅРёС†С‹
 
             //MessageBox.Show(similarity.ToString());
-            // Вычисляем и отображаем процент совпадения
+            // Р’С‹С‡РёСЃР»СЏРµРј Рё РѕС‚РѕР±СЂР°Р¶Р°РµРј РїСЂРѕС†РµРЅС‚ СЃРѕРІРїР°РґРµРЅРёСЏ
             //double similarity = 100.0 - (minDistance * 100.0 / 195075.0);
-            similarity = Math.Max(0, Math.Min(100, similarity)); // на случай выхода за пределы
+            similarity = Math.Max(0, Math.Min(100, similarity)); // РЅР° СЃР»СѓС‡Р°Р№ РІС‹С…РѕРґР° Р·Р° РїСЂРµРґРµР»С‹
 
             similarityBox.Text = $"{similarity:F2}%";
         }
@@ -536,8 +645,8 @@ namespace PaletteConverter
             catch
             {
                 panel1.BackColor = SystemColors.Control;
-                MessageBox.Show("Неверный HEX-код цвета.");
-                // Очищаем поля при ошибке
+                MessageBox.Show("РќРµРІРµСЂРЅС‹Р№ HEX-РєРѕРґ С†РІРµС‚Р°.");
+                // РћС‡РёС‰Р°РµРј РїРѕР»СЏ РїСЂРё РѕС€РёР±РєРµ
                 ColR.Text = "";
                 ColG.Text = "";
                 ColB.Text = "";
@@ -553,14 +662,14 @@ namespace PaletteConverter
             var (h1, s1, v1) = RgbToHsv(c1);
             var (h2, s2, v2) = RgbToHsv(c2);
 
-            // Учитываем цикличность hue
-            double dh = Math.Min(Math.Abs(h1 - h2), 360 - Math.Abs(h1 - h2)) / 180.0; // нормализуем до [0, 1]
+            // РЈС‡РёС‚С‹РІР°РµРј С†РёРєР»РёС‡РЅРѕСЃС‚СЊ hue
+            double dh = Math.Min(Math.Abs(h1 - h2), 360 - Math.Abs(h1 - h2)) / 180.0; // РЅРѕСЂРјР°Р»РёР·СѓРµРј РґРѕ [0, 1]
             double ds = s1 - s2;
             double dv = v1 - v2;
 
-            // Весовая евклидова метрика
+            // Р’РµСЃРѕРІР°СЏ РµРІРєР»РёРґРѕРІР° РјРµС‚СЂРёРєР°
             double distance = dh * dh + ds * ds + dv * dv;
-            return (int)(distance * 1000); // масштабируем для целочисленного сравнения
+            return (int)(distance * 1000); // РјР°СЃС€С‚Р°Р±РёСЂСѓРµРј РґР»СЏ С†РµР»РѕС‡РёСЃР»РµРЅРЅРѕРіРѕ СЃСЂР°РІРЅРµРЅРёСЏ
         }
 
 
@@ -608,7 +717,7 @@ namespace PaletteConverter
             double g = PivotRgb(color.G / 255.0);
             double b = PivotRgb(color.B / 255.0);
 
-            // Преобразуем в XYZ (sRGB, D65)
+            // РџСЂРµРѕР±СЂР°Р·СѓРµРј РІ XYZ (sRGB, D65)
             double x = r * 0.4124 + g * 0.3576 + b * 0.1805;
             double y = r * 0.2126 + g * 0.7152 + b * 0.0722;
             double z = r * 0.0193 + g * 0.1192 + b * 0.9505;
@@ -713,17 +822,17 @@ namespace PaletteConverter
 
         private void ScreenColorButton_Click(object sender, EventArgs e)
         {
-            if (isPicking) return; // Если пипетка уже работает
+            if (isPicking) return; // Р•СЃР»Рё РїРёРїРµС‚РєР° СѓР¶Рµ СЂР°Р±РѕС‚Р°РµС‚
 
             isPicking = true;
 
-            // Запускаем таймер для захвата цвета
+            // Р—Р°РїСѓСЃРєР°РµРј С‚Р°Р№РјРµСЂ РґР»СЏ Р·Р°С…РІР°С‚Р° С†РІРµС‚Р°
             pipetteTimer = new System.Windows.Forms.Timer();
-            pipetteTimer.Interval = 50; // Каждые 50 мс
+            pipetteTimer.Interval = 50; // РљР°Р¶РґС‹Рµ 50 РјСЃ
             pipetteTimer.Tick += PipetteTimer_Tick;
             pipetteTimer.Start();
 
-            // Инициализируем глобальный хук для перехвата кликов мыши
+            // РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РіР»РѕР±Р°Р»СЊРЅС‹Р№ С…СѓРє РґР»СЏ РїРµСЂРµС…РІР°С‚Р° РєР»РёРєРѕРІ РјС‹С€Рё
             mouseHook = new MouseHook();
             mouseHook.MouseClickDetected += () =>
             {
@@ -731,7 +840,7 @@ namespace PaletteConverter
                 pipetteTimer.Dispose();
                 isPicking = false;
 
-                // Останавливаем хук после клика
+                // РћСЃС‚Р°РЅР°РІР»РёРІР°РµРј С…СѓРє РїРѕСЃР»Рµ РєР»РёРєР°
                 mouseHook.Unhook();
                 mouseHook = null;
             };
@@ -760,7 +869,7 @@ namespace PaletteConverter
             ColG.Text = color.G.ToString();
             ColB.Text = color.B.ToString();
             FindClosestColor();
-            
+
         }
         public class MouseClickFilter : IMessageFilter
         {
@@ -777,7 +886,7 @@ namespace PaletteConverter
                 if (m.Msg == 0x201) // MSG: Left mouse button down
                 {
                     onClick.Invoke();
-                    return true; // Прекращаем дальнейшую обработку
+                    return true; // РџСЂРµРєСЂР°С‰Р°РµРј РґР°Р»СЊРЅРµР№С€СѓСЋ РѕР±СЂР°Р±РѕС‚РєСѓ
                 }
                 return false;
             }
@@ -787,7 +896,7 @@ namespace PaletteConverter
 
         public class MouseHook
         {
-            // Декларации функций WinAPI
+            // Р”РµРєР»Р°СЂР°С†РёРё С„СѓРЅРєС†РёР№ WinAPI
             private const int WH_MOUSE_LL = 14;
             private const int WM_LBUTTONDOWN = 0x201;
 
@@ -803,14 +912,14 @@ namespace PaletteConverter
                 _hookID = SetHook(_hookProc);
             }
 
-            // Установка хука
+            // РЈСЃС‚Р°РЅРѕРІРєР° С…СѓРєР°
             private IntPtr SetHook(HookProc proc)
             {
                 IntPtr hInstance = Marshal.GetHINSTANCE(System.Reflection.Assembly.GetExecutingAssembly().GetModules()[0]);
                 return SetWindowsHookEx(WH_MOUSE_LL, proc, hInstance, 0);
             }
 
-            // Callback функция хука
+            // Callback С„СѓРЅРєС†РёСЏ С…СѓРєР°
             private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
             {
                 if (nCode >= 0 && wParam == (IntPtr)WM_LBUTTONDOWN)
@@ -821,13 +930,13 @@ namespace PaletteConverter
                 return CallNextHookEx(_hookID, nCode, wParam, lParam);
             }
 
-            // Освобождение хука
+            // РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ С…СѓРєР°
             public void Unhook()
             {
                 UnhookWindowsHookEx(_hookID);
             }
 
-            // Импортированные функции из user32.dll
+            // РРјРїРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹Рµ С„СѓРЅРєС†РёРё РёР· user32.dll
             [DllImport("user32.dll", CharSet = CharSet.Auto)]
             private static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hMod, uint dwThreadId);
 
@@ -858,7 +967,7 @@ namespace PaletteConverter
 
 
 
-        //РАСЧЕТ ПЛОЩАДИ СТЕН
+        //Р РђРЎР§Р•Рў РџР›РћР©РђР”Р РЎРўР•Рќ
         private void DepthBox_TextChanged(object sender, EventArgs e)
         {
             squareCalc();
@@ -878,7 +987,7 @@ namespace PaletteConverter
             }
             else
             {
-                MessageBox.Show("Пожалуйста, введите корректные числовые значения для ширины, высоты и глубины.");
+                MessageBox.Show("РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РІРІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Рµ С‡РёСЃР»РѕРІС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РґР»СЏ С€РёСЂРёРЅС‹, РІС‹СЃРѕС‚С‹ Рё РіР»СѓР±РёРЅС‹.");
                 SquareBox.Text = "";
                 return;
             }
@@ -894,11 +1003,11 @@ namespace PaletteConverter
             double cans = 0;
             double totalPrice = 0;
             double TeoryPrice = 0; //
-            double consumption = 0; // расход на 1 м2 в литрах
+            double consumption = 0; // СЂР°СЃС…РѕРґ РЅР° 1 Рј2 РІ Р»РёС‚СЂР°С…
 
             double layers = LayersLabel.Text == "" ? 1 : double.Parse(LayersLabel.Text);
 
-            // Корректно парсим расход из текстового поля
+            // РљРѕСЂСЂРµРєС‚РЅРѕ РїР°СЂСЃРёРј СЂР°СЃС…РѕРґ РёР· С‚РµРєСЃС‚РѕРІРѕРіРѕ РїРѕР»СЏ
             double.TryParse(ConsumptionBox.Text.Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out consumption);
 
             double squareValue = 0;
@@ -914,7 +1023,7 @@ namespace PaletteConverter
             if (volume > 0 && (price > 0 && price < 30000))
             {
                 cansNeeded = litersNeeded / volume;
-                // ВАЖНО: Math.Ceiling(1.02) всегда даст 2, если тип double!
+                // Р’РђР–РќРћ: Math.Ceiling(1.02) РІСЃРµРіРґР° РґР°СЃС‚ 2, РµСЃР»Рё С‚РёРї double!
                 cans = Math.Ceiling(cansNeeded);
                 TeoryPrice = cans * price;
                 totalPrice = cansNeeded * price;
@@ -922,7 +1031,7 @@ namespace PaletteConverter
                 RubLabel.Text = TeoryPrice.ToString("F2");
                 LitreLabel.Text = litersNeeded.ToString("F2");
                 CansLabel.Text = cansNeeded.ToString("F2");
-                // Для отладки:
+                // Р”Р»СЏ РѕС‚Р»Р°РґРєРё:
                 //MessageBox.Show($"litersNeeded={litersNeeded:F4}, volume={volume:F4}, cansNeeded={cansNeeded:F4}, cans={cans}");
             }
         }
@@ -938,23 +1047,23 @@ namespace PaletteConverter
 
         private void ColorDiag2()
         {
-            // Создаем диалог выбора цвета
+            // РЎРѕР·РґР°РµРј РґРёР°Р»РѕРі РІС‹Р±РѕСЂР° С†РІРµС‚Р°
             ColorDialog colorDialog = new ColorDialog();
 
-            // Опционально: устанавливаем начальный цвет (например, текущий цвет panel1)
+            // РћРїС†РёРѕРЅР°Р»СЊРЅРѕ: СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅР°С‡Р°Р»СЊРЅС‹Р№ С†РІРµС‚ (РЅР°РїСЂРёРјРµСЂ, С‚РµРєСѓС‰РёР№ С†РІРµС‚ panel1)
             colorDialog.Color = panel3.BackColor;
 
-            // Показываем диалог и проверяем, что пользователь нажал OK
+            // РџРѕРєР°Р·С‹РІР°РµРј РґРёР°Р»РѕРі Рё РїСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°Р¶Р°Р» OK
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
-                // Устанавливаем выбранный цвет для panel1
+                // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІС‹Р±СЂР°РЅРЅС‹Р№ С†РІРµС‚ РґР»СЏ panel1
                 panel3.BackColor = colorDialog.Color;
 
-                // Опционально: выводим HEX-код цвета (если нужно)
+                // РћРїС†РёРѕРЅР°Р»СЊРЅРѕ: РІС‹РІРѕРґРёРј HEX-РєРѕРґ С†РІРµС‚Р° (РµСЃР»Рё РЅСѓР¶РЅРѕ)
                 string hexColor = "#" + colorDialog.Color.R.ToString("X2")
                                         + colorDialog.Color.G.ToString("X2")
                                         + colorDialog.Color.B.ToString("X2");
-                //MessageBox.Show("Выбран цвет: " + hexColor);
+                //MessageBox.Show("Р’С‹Р±СЂР°РЅ С†РІРµС‚: " + hexColor);
                 HexBox.Text = hexColor;
                 /*ColR.Text = colorDialog.Color.R.ToString();
                 ColG.Text = colorDialog.Color.G.ToString();
@@ -992,7 +1101,7 @@ namespace PaletteConverter
             BrandBox.Items.Clear();
             BrandBox.Items.AddRange(plugin.SupportedBrands.ToArray());
 
-            // Если comboBox1 содержит бренд, пытаемся его выбрать
+            // Р•СЃР»Рё comboBox1 СЃРѕРґРµСЂР¶РёС‚ Р±СЂРµРЅРґ, РїС‹С‚Р°РµРјСЃСЏ РµРіРѕ РІС‹Р±СЂР°С‚СЊ
             string selectedBrand = comboBox1.Text;
             int existingIndex = BrandBox.Items.IndexOf(selectedBrand);
 
@@ -1002,7 +1111,7 @@ namespace PaletteConverter
             }
             else if (BrandBox.Items.Count > 0)
             {
-                BrandBox.SelectedIndex = 0; // если совпадений нет — выбираем первый
+                BrandBox.SelectedIndex = 0; // РµСЃР»Рё СЃРѕРІРїР°РґРµРЅРёР№ РЅРµС‚ вЂ” РІС‹Р±РёСЂР°РµРј РїРµСЂРІС‹Р№
             }
         }
 
@@ -1015,7 +1124,7 @@ namespace PaletteConverter
 
 
 
-        //ПОДБОР СЛОЕВ
+        //РџРћР”Р‘РћР  РЎР›РћР•Р’
 
         private bool IsValidHex(string hex)
         {
@@ -1030,44 +1139,44 @@ namespace PaletteConverter
         double GetBrightness(Color c) => 0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B;
         private int CalculateRequiredLayers()
         {
-            // Получаем HEX цвета
+            // РџРѕР»СѓС‡Р°РµРј HEX С†РІРµС‚Р°
             string hexOld = HexBox.Text.Trim();
             string hexNew = AnalogColorHEX.Text.Trim();
 
             if (!IsValidHex(hexOld) || !IsValidHex(hexNew))
             {
-                MessageBox.Show("Введите корректные HEX-значения цвета!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Рµ HEX-Р·РЅР°С‡РµРЅРёСЏ С†РІРµС‚Р°!", "РћС€РёР±РєР°", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return 1;
             }
 
-            // Переводим в Color
+            // РџРµСЂРµРІРѕРґРёРј РІ Color
             Color oldColor = ColorTranslator.FromHtml(hexOld);
             Color newColor = ColorTranslator.FromHtml(hexNew);
 
-            // Переводим в Lab
+            // РџРµСЂРµРІРѕРґРёРј РІ Lab
             var (l1, a1, b1) = RgbToLab(oldColor);
             var (l2, a2, b2) = RgbToLab(newColor);
 
-            // Вычисляем дельту E по евклидовой метрике
+            // Р’С‹С‡РёСЃР»СЏРµРј РґРµР»СЊС‚Сѓ E РїРѕ РµРІРєР»РёРґРѕРІРѕР№ РјРµС‚СЂРёРєРµ
             double deltaE = Math.Sqrt(Math.Pow(l1 - l2, 2) + Math.Pow(a1 - a2, 2) + Math.Pow(b1 - b2, 2));
 
-            // Проверка, светлее ли новый цвет
+            // РџСЂРѕРІРµСЂРєР°, СЃРІРµС‚Р»РµРµ Р»Рё РЅРѕРІС‹Р№ С†РІРµС‚
             bool newIsLighter = GetBrightness(newColor) > GetBrightness(oldColor);
 
-            // Коэффициент по материалу
-            string material = comboBox6.SelectedItem?.ToString()?.ToLower() ?? "краска";
+            // РљРѕСЌС„С„РёС†РёРµРЅС‚ РїРѕ РјР°С‚РµСЂРёР°Р»Сѓ
+            string material = comboBox6.SelectedItem?.ToString()?.ToLower() ?? "РєСЂР°СЃРєР°";
             double materialFactor = material switch
             {
-                string m when m.Contains("гипс") => 1.3,
-                string m when m.Contains("обои") => 1.5,
-                _ => 1.0 // Краска
+                string m when m.Contains("РіРёРїСЃ") => 1.3,
+                string m when m.Contains("РѕР±РѕРё") => 1.5,
+                _ => 1.0 // РљСЂР°СЃРєР°
             };
 
-            // Учет грунтовки
+            // РЈС‡РµС‚ РіСЂСѓРЅС‚РѕРІРєРё
             bool hasPrimer = primerCheck.Checked;
             double primerFactor = hasPrimer ? 0.8 : 1.0;
 
-            // Базовое число слоев
+            // Р‘Р°Р·РѕРІРѕРµ С‡РёСЃР»Рѕ СЃР»РѕРµРІ
             double baseLayers = deltaE / 20.0;
 
             if (newIsLighter)
@@ -1093,7 +1202,7 @@ namespace PaletteConverter
 
 
 
-        //ПАРСЕР ВСЕИНСТРУМЕНТЫ
+        //РџРђР РЎРРќР“
 
 
 
@@ -1107,7 +1216,7 @@ namespace PaletteConverter
         {
             if (comboBox4.SelectedItem == null || BrandBox.SelectedItem == null)
             {
-                MessageBox.Show("Выберите плагин и бренд.");
+                MessageBox.Show("Р’С‹Р±РµСЂРёС‚Рµ РїР»Р°РіРёРЅ Рё Р±СЂРµРЅРґ.");
                 return;
             }
 
@@ -1116,7 +1225,7 @@ namespace PaletteConverter
 
             try
             {
-                //MessageBox.Show("Парсинг начат. Пожалуйста, подождите...");
+                //MessageBox.Show("РџР°СЂСЃРёРЅРі РЅР°С‡Р°С‚. РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РїРѕРґРѕР¶РґРёС‚Рµ...");
                 var list = await plugin.GetProductsAsync(brand);
                 products.Clear();
                 comboBox5.Items.Clear();
@@ -1134,7 +1243,7 @@ namespace PaletteConverter
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}");
+                MessageBox.Show($"РћС€РёР±РєР°: {ex.Message}");
             }
         }
 
@@ -1146,38 +1255,38 @@ namespace PaletteConverter
                 var selectedProduct = products[comboBox5.SelectedIndex];
                 string imageUrl = selectedProduct.ImageUrl;
 
-                // Обновляем PriceBox
+                // РћР±РЅРѕРІР»СЏРµРј PriceBox
                 PriceBox.Text = selectedProduct.Price.ToString();
 
-                // Извлекаем объем из названия (например, "Краска Dulux 2.5 л")
+                // РР·РІР»РµРєР°РµРј РѕР±СЉРµРј РёР· РЅР°Р·РІР°РЅРёСЏ (РЅР°РїСЂРёРјРµСЂ, "РљСЂР°СЃРєР° Dulux 2.5 Р»")
                 string name = selectedProduct.Name;
                 string volume = "";
 
-                // Пытаемся найти объем в литрах
-                var match = Regex.Match(name, @"(\d+(?:[.,]\d+)?)\s*л\b", RegexOptions.IgnoreCase);
+                // РџС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё РѕР±СЉРµРј РІ Р»РёС‚СЂР°С…
+                var match = Regex.Match(name, @"(\d+(?:[.,]\d+)?)\s*Р»\b", RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
-                    volume = match.Groups[1].Value.Replace(',', '.'); // нормализуем
+                    volume = match.Groups[1].Value.Replace(',', '.'); // РЅРѕСЂРјР°Р»РёР·СѓРµРј
                 }
                 else
                 {
-                    // Если не нашли литры — ищем килограммы
-                    var matchKg = Regex.Match(name, @"(\d+(?:[.,]\d+)?)\s*кг\b", RegexOptions.IgnoreCase);
+                    // Р•СЃР»Рё РЅРµ РЅР°С€Р»Рё Р»РёС‚СЂС‹ вЂ” РёС‰РµРј РєРёР»РѕРіСЂР°РјРјС‹
+                    var matchKg = Regex.Match(name, @"(\d+(?:[.,]\d+)?)\s*РєРі\b", RegexOptions.IgnoreCase);
                     if (matchKg.Success)
                     {
                         string kgStr = matchKg.Groups[1].Value.Replace(',', '.');
                         if (double.TryParse(kgStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double weightKg))
                         {
-                            double density = 1.3; // плотность в кг/л — можно вынести в константу/настройку
+                            double density = 1.3; // РїР»РѕС‚РЅРѕСЃС‚СЊ РІ РєРі/Р» вЂ” РјРѕР¶РЅРѕ РІС‹РЅРµСЃС‚Рё РІ РєРѕРЅСЃС‚Р°РЅС‚Сѓ/РЅР°СЃС‚СЂРѕР№РєСѓ
                             double liters = weightKg / density;
-                            volume = liters.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); // округляем до 2 знаков
+                            volume = liters.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); // РѕРєСЂСѓРіР»СЏРµРј РґРѕ 2 Р·РЅР°РєРѕРІ
                         }
                     }
                 }
 
                 VolumeBox.Text = volume;
 
-                // Загрузка изображения
+                // Р—Р°РіСЂСѓР·РєР° РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
                 if (!string.IsNullOrEmpty(imageUrl))
                 {
                     using var client = new HttpClient();
@@ -1189,7 +1298,7 @@ namespace PaletteConverter
                     }
                     catch
                     {
-                        pictureBox1.Image = null; // или заглушка
+                        pictureBox1.Image = null; // РёР»Рё Р·Р°РіР»СѓС€РєР°
                     }
                 }
                 else
@@ -1257,14 +1366,14 @@ namespace PaletteConverter
 
             if (colorPreviewPlugin == null)
             {
-                MessageBox.Show("Плагин 'Color Preview' не загружен.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("РџР»Р°РіРёРЅ 'Color Preview' РЅРµ Р·Р°РіСЂСѓР¶РµРЅ.", "РћС€РёР±РєР°", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            // Получаем цвет из главной формы
+            // РџРѕР»СѓС‡Р°РµРј С†РІРµС‚ РёР· РіР»Р°РІРЅРѕР№ С„РѕСЂРјС‹
             Color selectedColor = panel2.BackColor;
 
-            // Устанавливаем цвет в плагин (если реализован метод SetColor)
+            // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј С†РІРµС‚ РІ РїР»Р°РіРёРЅ (РµСЃР»Рё СЂРµР°Р»РёР·РѕРІР°РЅ РјРµС‚РѕРґ SetColor)
             try
             {
                 dynamic plugin = colorPreviewPlugin;
@@ -1272,10 +1381,10 @@ namespace PaletteConverter
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка установки цвета в плагине: " + ex.Message);
+                MessageBox.Show("РћС€РёР±РєР° СѓСЃС‚Р°РЅРѕРІРєРё С†РІРµС‚Р° РІ РїР»Р°РіРёРЅРµ: " + ex.Message);
             }
 
-            // Показываем форму предпросмотра
+            // РџРѕРєР°Р·С‹РІР°РµРј С„РѕСЂРјСѓ РїСЂРµРґРїСЂРѕСЃРјРѕС‚СЂР°
             var previewForm = colorPreviewPlugin.GetMainForm();
 
             previewForm.FormClosed += (s, ev) =>
@@ -1286,5 +1395,214 @@ namespace PaletteConverter
             previewForm.Show(this);
         }
 
+
+
+
+
+
+        //РњРќРћР“РћРџРћРўРћР§РќР«Р™ РџРђР РЎР•Р 
+        private ConcurrentQueue<string> taskQueue;
+        private ConcurrentQueue<LogEntry> logQueue;
+        private int userDefinedInterval = 1000;
+        private int userProtocolDefinedInterval = 1000;
+        private string currentSite = "";
+
+        private void Calc_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            var ThreadsView = new ThreadsViewForm();
+            ThreadsView.Show();
+        }
+
+        public class LogEntry
+        {
+            public int ThreadId;
+            public string PaintName;
+            public double DurationMs;
+            public DateTime Timestamp;
+        }
+        private void ParseAllButton_Click(object sender, EventArgs e)
+        {
+            int threadCount = (int)numericUpDownThreads.Value;
+
+            currentSite = comboBox4.SelectedItem.ToString();
+            // РћС‡РёСЃС‚РёС‚СЊ РѕС‡РµСЂРµРґРё Рё СЃС‚Р°С‚РёСЃС‚РёРєСѓ
+            taskQueue = new ConcurrentQueue<string>();
+            logQueue = new ConcurrentQueue<LogEntry>();
+
+            // Р—Р°РіСЂСѓР·РёС‚СЊ Р·Р°РґР°С‡Рё РёР· ParseBox
+            foreach (var item in BrandBox.Items)
+            {
+                string paintName = item.ToString();
+                taskQueue.Enqueue(paintName);
+            }
+
+            // Р—Р°РїСѓСЃРє СЂР°Р±РѕС‡РёС… РїРѕС‚РѕРєРѕРІ
+            List<Thread> threads = new List<Thread>();
+            for (int i = 0; i < threadCount; i++)
+            {
+                Thread t = new Thread(ProcessTasks);
+                t.IsBackground = true;
+                t.Start();
+                threads.Add(t);
+            }
+
+            // Р—Р°РїСѓСЃРє Р»РѕРіРёСЂСѓСЋС‰РµРіРѕ РїРѕС‚РѕРєР°
+            Thread logThread = new Thread(HandleLogging);
+            logThread.IsBackground = true;
+            logThread.Priority = ThreadPriority.Lowest;
+            logThread.Start();
+
+        }
+        private void ProcessTasks()
+        {
+            var plugin = loadedParsers.First(p => p.Name == currentSite);
+
+            while (true) // Р±РµСЃРєРѕРЅРµС‡РЅС‹Р№ С†РёРєР», С‡С‚РѕР±С‹ РїРѕС‚РѕРє РЅРµ Р·Р°РІРµСЂС€Р°Р»СЃСЏ СЃР°Рј РїРѕ СЃРµР±Рµ
+            {
+                if (taskQueue.TryDequeue(out string paintName))
+                {
+                    var start = DateTime.Now;
+
+                    try
+                    {
+                        var brand = paintName;
+                        var list = plugin.GetProductsAsync(brand).GetAwaiter().GetResult();
+
+                        this.Invoke((System.Windows.Forms.MethodInvoker)(() =>
+                        {
+                            foreach (var product in list)
+                            {
+                                products.Add(product);
+                                comboBox5.Items.Add(product);
+                            }
+                            if (comboBox5.Items.Count > 0)
+                                comboBox5.SelectedIndex = 0;
+                        }));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"РћС€РёР±РєР° РїР°СЂСЃРёРЅРіР° {paintName}: {ex.Message}");
+                        continue;
+                    }
+
+                    var duration = (DateTime.Now - start).TotalMilliseconds;
+
+                    logQueue.Enqueue(new LogEntry
+                    {
+                        ThreadId = Thread.CurrentThread.ManagedThreadId,
+                        PaintName = paintName,
+                        DurationMs = duration,
+                        Timestamp = DateTime.Now
+                    });
+                }
+                else
+                {
+                    // РћС‡РµСЂРµРґСЊ РїСѓСЃС‚Р°СЏ вЂ” Р·Р°СЃС‹РїР°РµРј, РЅРѕ РЅРµ РІС‹С…РѕРґРёРј РёР· С†РёРєР»Р°
+                    Thread.Sleep(userDefinedInterval);
+                }
+            }
+        }
+
+
+
+        private void HandleLogging()
+        {
+            while (true)
+            {
+                if (logQueue.TryDequeue(out LogEntry log))
+                {
+                    // РЎРѕС…СЂР°РЅСЏРµРј РІ Р‘Р”
+                    SaveLogToDatabase(log);
+                }
+                else
+                {
+                    Thread.Sleep(userProtocolDefinedInterval); // РќР°РїСЂРёРјРµСЂ, 1000 РјСЃ
+                }
+            }
+        }
+        private void EnsureLogTableExists()
+        {
+            using (var conn = new SQLiteConnection("Data Source=log.db"))
+            {
+                //MessageBox.Show("РџСЂРѕРІРµСЂРєР° Р±Рґ...");
+                conn.Open();
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+            CREATE TABLE IF NOT EXISTS ParseLog (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ThreadId INTEGER,
+                PaintName TEXT,
+                DurationMs REAL,
+                Timestamp TEXT
+            );";
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private void SaveLogToDatabase(LogEntry log)
+        {
+            string dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "log.db");
+
+            using (var conn = new SQLiteConnection("Data Source=log.db"))
+            {
+                //MessageBox.Show("РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє Р±Р°Р·Рµ РґР°РЅРЅС‹С…...");    
+                conn.Open();
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = @"INSERT INTO ParseLog (ThreadId, PaintName, DurationMs, Timestamp)
+                            VALUES (@tid, @name, @dur, @ts)";
+                cmd.Parameters.AddWithValue("@tid", log.ThreadId);
+                cmd.Parameters.AddWithValue("@name", log.PaintName);
+                cmd.Parameters.AddWithValue("@dur", log.DurationMs);
+                cmd.Parameters.AddWithValue("@ts", log.Timestamp);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            comboBox5.Items.Clear();
+        }
+
+        private void РґРёСЂРµРєС‚РѕСЂРёСЏToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // РџРѕР»СѓС‡Р°РµРј РїСѓС‚СЊ Рє РїР°РїРєРµ, РіРґРµ РЅР°С…РѕРґРёС‚СЃСЏ РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р»
+            string folder = AppDomain.CurrentDomain.BaseDirectory;
+            // РћС‚РєСЂС‹РІР°РµРј РїР°РїРєСѓ РІ РїСЂРѕРІРѕРґРЅРёРєРµ
+            System.Diagnostics.Process.Start("explorer.exe", folder);
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            userProtocolDefinedInterval = (int)numericUpDown1.Value;
+        }
+
+        private void toolStripStatusLabel1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Р»РёС†РµРЅР·РёСЏToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var licenseForm = new LicForm();
+            licenseForm.UpdateLicInfo(license);
+            licenseForm.Show();
+        }
+
+        private void РІС‹С…РѕРґToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void РѕРџСЂРѕРіСЂР°РјРјРµToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var About = new AboutForm();
+            About.Show();
+        }
     }
+
 }
