@@ -264,7 +264,7 @@
             Controls.Add(ApplyButton);
             Controls.Add(checkedListBoxPlugins);
             Name = "PluginManagerForm";
-            Text = "PluginManagerForm";
+            Text = "Менеджер плагинов";
             ResumeLayout(false);
             PerformLayout();
         }

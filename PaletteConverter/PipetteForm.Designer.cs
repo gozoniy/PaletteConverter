@@ -65,7 +65,7 @@
             Controls.Add(LoadButton);
             Controls.Add(pictureBox1);
             Name = "PipetteForm";
-            Text = "PipetteForm";
+            Text = "Пипетка по фото";
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
         }

@@ -1,34 +1,14 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Reflection;
-using System.Text.Json;
-using System.Windows.Forms;
-using PalettePluginContracts;
-
+﻿using PalettePluginContracts;
 using System.Runtime.InteropServices;
-using System.Drawing.Imaging;
-
-using System;
-
-using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using AngleSharp.Text;
 using ParserContracts;
 using System.Collections.Concurrent;
-
 using System.Data.SQLite;
-
 using ProtectionLib;
-using System.ComponentModel;
-
 using System.Management;
-
 using System.IO.Pipes;
-using System.IO;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.Optimization;
-using System.Text;
 
 
 
@@ -97,39 +77,47 @@ namespace PaletteConverter
             removeWatcher = new ManagementEventWatcher(removeQuery);
 
             DateTime lastRemoveEventTime = DateTime.MinValue;
-            DateTime LastInsertEventTime = DateTime.MinValue;
+            DateTime lastInsertEventTime = DateTime.MinValue;
+
+            object locker = new object();
+
             insertWatcher.EventArrived += (s, e) =>
             {
-                var now = DateTime.Now;
-
-                if ((now - LastInsertEventTime).TotalSeconds > 3)
+                lock (locker)
                 {
-                    Invoke(() =>
+                    var now = DateTime.Now;
+                    if ((now - lastInsertEventTime).TotalSeconds > 5)  // 5 секунд — интервал для игнорирования повторных вызовов
                     {
-                        //MessageBox.Show("USB подключен");
-                        LicCheck();
-                    });
-
+                        lastInsertEventTime = now;
+                        Invoke(() =>
+                        {
+                            LicCheck();
+                        });
+                    }
                 }
             };
 
             removeWatcher.EventArrived += (s, e) =>
             {
-                var now = DateTime.Now;
-                if ((now - lastRemoveEventTime).TotalSeconds > 3)
+                lock (locker)
                 {
-                    lastRemoveEventTime = now;
-                    Invoke(() =>
+                    var now = DateTime.Now;
+                    if ((now - lastRemoveEventTime).TotalSeconds > 5)
                     {
-                        //MessageBox.Show("USB отключен");
-                        LicCheck();
-                    });
+                        lastRemoveEventTime = now;
+                        Invoke(() =>
+                        {
+                            LicCheck();
+                        });
+                    }
                 }
             };
 
             insertWatcher.Start();
             removeWatcher.Start();
         }
+
+
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             insertWatcher?.Stop();
@@ -164,6 +152,7 @@ namespace PaletteConverter
                 if (!ColorMaker.TabPages.Contains(Calc))
                 {
                     ColorMaker.TabPages.Insert(1, Calc);
+                    ColorMaker.TabPages.Insert(2, coler);
                 }
                 this.Text = "Конвертер палитр";
 
@@ -171,6 +160,7 @@ namespace PaletteConverter
             else if (license.Status == LicenseStatus.Expired)
             {
                 ColorMaker.TabPages.Remove(Calc); // Удалить вкладку
+                ColorMaker.TabPages.Remove(coler);
                 this.Text = "Конвертер палитр - Лицензия истекла";
 
                 //MessageBox.Show("Срок действия лицензии истёк!");
@@ -178,12 +168,14 @@ namespace PaletteConverter
             else if (license.Status == LicenseStatus.Invalid)
             {
                 ColorMaker.TabPages.Remove(Calc); // Удалить вкладку
+                ColorMaker.TabPages.Remove(coler);
                 this.Text = "Конвертер палитр - Лицензия недействительна";
                 //MessageBox.Show("Лицензия недействительна!");
             }
             else
             {
                 ColorMaker.TabPages.Remove(Calc); // Удалить вкладку
+                ColorMaker.TabPages.Remove(coler);
                 this.Text = "Конвертер палитр - Демонстрационный режим";
                 //essageBox.Show("Запущено в демо-режиме.");
             }
@@ -1628,7 +1620,7 @@ namespace PaletteConverter
 
             double brightness = (selectedColor.R + selectedColor.G + selectedColor.B) / 3.0;
             bool useTransparentBase = brightness < 180;
-            BaseTypeLabel.Text = useTransparentBase ? "Прозрачная база" : "Белая база";
+            //BaseTypeLabel.Text = useTransparentBase ? "Прозрачная база" : "Белая база";
 
             var pigments = new (string Name, double[] Rgb)[]
             {

@@ -113,7 +113,6 @@
             coler = new TabPage();
             resultBox = new RichTextBox();
             label35 = new Label();
-            BaseTypeLabel = new Label();
             label29 = new Label();
             colerAnswLabel = new Label();
             Vbox = new TextBox();
@@ -145,7 +144,7 @@
             ColorMaker.Location = new Point(0, 24);
             ColorMaker.Name = "ColorMaker";
             ColorMaker.SelectedIndex = 0;
-            ColorMaker.Size = new Size(844, 443);
+            ColorMaker.Size = new Size(814, 406);
             ColorMaker.TabIndex = 0;
             ColorMaker.SelectedIndexChanged += ColorMaker_SelectedIndexChanged;
             // 
@@ -184,7 +183,7 @@
             Converter.Location = new Point(4, 24);
             Converter.Name = "Converter";
             Converter.Padding = new Padding(3);
-            Converter.Size = new Size(836, 415);
+            Converter.Size = new Size(806, 378);
             Converter.TabIndex = 0;
             Converter.Text = "Конвертер цветов";
             Converter.UseVisualStyleBackColor = true;
@@ -200,9 +199,10 @@
             // 
             // PreviewButton
             // 
-            PreviewButton.Location = new Point(567, 323);
+            PreviewButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            PreviewButton.Location = new Point(597, 323);
             PreviewButton.Name = "PreviewButton";
-            PreviewButton.Size = new Size(200, 38);
+            PreviewButton.Size = new Size(204, 38);
             PreviewButton.TabIndex = 28;
             PreviewButton.Text = "Предпросмотр цвета";
             PreviewButton.UseVisualStyleBackColor = true;
@@ -233,16 +233,15 @@
             comboBox3.FormattingEnabled = true;
             comboBox3.Items.AddRange(new object[] { "HSV", "RGB", "LCH", "LAB" });
             comboBox3.Location = new Point(322, 95);
-            comboBox3.MaximumSize = new Size(239, 0);
             comboBox3.Name = "comboBox3";
-            comboBox3.Size = new Size(239, 23);
+            comboBox3.Size = new Size(270, 23);
             comboBox3.TabIndex = 25;
             comboBox3.SelectedIndexChanged += comboBox3_SelectedIndexChanged;
             // 
             // similarityBox
             // 
             similarityBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            similarityBox.Location = new Point(722, 297);
+            similarityBox.Location = new Point(753, 297);
             similarityBox.Name = "similarityBox";
             similarityBox.ReadOnly = true;
             similarityBox.Size = new Size(45, 23);
@@ -253,7 +252,7 @@
             // 
             label9.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label9.AutoSize = true;
-            label9.Location = new Point(567, 305);
+            label9.Location = new Point(598, 305);
             label9.Name = "label9";
             label9.Size = new Size(73, 15);
             label9.TabIndex = 23;
@@ -263,7 +262,7 @@
             // 
             label5.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label5.AutoSize = true;
-            label5.Location = new Point(710, 278);
+            label5.Location = new Point(741, 278);
             label5.Name = "label5";
             label5.Size = new Size(14, 15);
             label5.TabIndex = 22;
@@ -272,7 +271,7 @@
             // AnColB
             // 
             AnColB.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            AnColB.Location = new Point(730, 270);
+            AnColB.Location = new Point(761, 270);
             AnColB.Name = "AnColB";
             AnColB.Size = new Size(37, 23);
             AnColB.TabIndex = 21;
@@ -281,7 +280,7 @@
             // 
             label6.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label6.AutoSize = true;
-            label6.Location = new Point(636, 278);
+            label6.Location = new Point(667, 278);
             label6.Name = "label6";
             label6.Size = new Size(15, 15);
             label6.TabIndex = 20;
@@ -290,7 +289,7 @@
             // AnColG
             // 
             AnColG.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            AnColG.Location = new Point(656, 270);
+            AnColG.Location = new Point(687, 270);
             AnColG.Name = "AnColG";
             AnColG.Size = new Size(37, 23);
             AnColG.TabIndex = 19;
@@ -299,7 +298,7 @@
             // 
             label7.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label7.AutoSize = true;
-            label7.Location = new Point(567, 278);
+            label7.Location = new Point(598, 278);
             label7.Name = "label7";
             label7.Size = new Size(14, 15);
             label7.TabIndex = 18;
@@ -308,7 +307,7 @@
             // AnColR
             // 
             AnColR.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            AnColR.Location = new Point(587, 270);
+            AnColR.Location = new Point(618, 270);
             AnColR.Name = "AnColR";
             AnColR.Size = new Size(37, 23);
             AnColR.TabIndex = 17;
@@ -316,7 +315,7 @@
             // AnalogColorHEX
             // 
             AnalogColorHEX.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            AnalogColorHEX.Location = new Point(667, 241);
+            AnalogColorHEX.Location = new Point(698, 241);
             AnalogColorHEX.Name = "AnalogColorHEX";
             AnalogColorHEX.Size = new Size(100, 23);
             AnalogColorHEX.TabIndex = 16;
@@ -326,7 +325,7 @@
             // 
             label8.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label8.AutoSize = true;
-            label8.Location = new Point(567, 249);
+            label8.Location = new Point(598, 249);
             label8.Name = "label8";
             label8.Size = new Size(29, 15);
             label8.TabIndex = 15;
@@ -337,7 +336,7 @@
             comboBox2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             comboBox2.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox2.FormattingEnabled = true;
-            comboBox2.Location = new Point(567, 212);
+            comboBox2.Location = new Point(598, 212);
             comboBox2.Name = "comboBox2";
             comboBox2.Size = new Size(200, 23);
             comboBox2.TabIndex = 13;
@@ -357,9 +356,8 @@
             comboBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             comboBox1.FormattingEnabled = true;
             comboBox1.Location = new Point(322, 35);
-            comboBox1.MaximumSize = new Size(239, 0);
             comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(239, 23);
+            comboBox1.Size = new Size(270, 23);
             comboBox1.TabIndex = 11;
             comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
             // 
@@ -368,7 +366,7 @@
             panel2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             panel2.BackColor = Color.Transparent;
             panel2.BorderStyle = BorderStyle.Fixed3D;
-            panel2.Location = new Point(567, 6);
+            panel2.Location = new Point(598, 6);
             panel2.Name = "panel2";
             panel2.Size = new Size(200, 200);
             panel2.TabIndex = 3;
@@ -513,7 +511,7 @@
             Calc.Location = new Point(4, 24);
             Calc.Name = "Calc";
             Calc.Padding = new Padding(3);
-            Calc.Size = new Size(836, 415);
+            Calc.Size = new Size(806, 378);
             Calc.TabIndex = 1;
             Calc.Text = "Калькулятор краски";
             Calc.UseVisualStyleBackColor = true;
@@ -521,8 +519,9 @@
             // 
             // label28
             // 
+            label28.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label28.AutoSize = true;
-            label28.Location = new Point(773, 3);
+            label28.Location = new Point(742, 3);
             label28.Name = "label28";
             label28.Size = new Size(51, 15);
             label28.TabIndex = 47;
@@ -530,19 +529,21 @@
             // 
             // numericUpDown1
             // 
+            numericUpDown1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             numericUpDown1.Increment = new decimal(new int[] { 100, 0, 0, 0 });
-            numericUpDown1.Location = new Point(773, 18);
+            numericUpDown1.Location = new Point(742, 18);
             numericUpDown1.Maximum = new decimal(new int[] { 5000, 0, 0, 0 });
             numericUpDown1.Minimum = new decimal(new int[] { 100, 0, 0, 0 });
             numericUpDown1.Name = "numericUpDown1";
-            numericUpDown1.Size = new Size(54, 23);
+            numericUpDown1.Size = new Size(55, 23);
             numericUpDown1.TabIndex = 46;
             numericUpDown1.Value = new decimal(new int[] { 1000, 0, 0, 0 });
             numericUpDown1.ValueChanged += numericUpDown1_ValueChanged;
             // 
             // button3
             // 
-            button3.Location = new Point(810, 46);
+            button3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            button3.Location = new Point(779, 46);
             button3.Name = "button3";
             button3.Size = new Size(23, 23);
             button3.TabIndex = 45;
@@ -552,9 +553,10 @@
             // 
             // button2
             // 
-            button2.Location = new Point(603, 18);
+            button2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            button2.Location = new Point(572, 18);
             button2.Name = "button2";
-            button2.Size = new Size(23, 23);
+            button2.Size = new Size(24, 23);
             button2.TabIndex = 44;
             button2.Text = "?";
             button2.UseVisualStyleBackColor = true;
@@ -562,8 +564,9 @@
             // 
             // label27
             // 
+            label27.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label27.AutoSize = true;
-            label27.Location = new Point(713, 3);
+            label27.Location = new Point(682, 3);
             label27.Name = "label27";
             label27.Size = new Size(54, 15);
             label27.TabIndex = 43;
@@ -571,19 +574,21 @@
             // 
             // numericUpDownThreads
             // 
-            numericUpDownThreads.Location = new Point(713, 18);
+            numericUpDownThreads.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            numericUpDownThreads.Location = new Point(682, 18);
             numericUpDownThreads.Maximum = new decimal(new int[] { 16, 0, 0, 0 });
             numericUpDownThreads.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numericUpDownThreads.Name = "numericUpDownThreads";
-            numericUpDownThreads.Size = new Size(54, 23);
+            numericUpDownThreads.Size = new Size(55, 23);
             numericUpDownThreads.TabIndex = 42;
             numericUpDownThreads.Value = new decimal(new int[] { 4, 0, 0, 0 });
             // 
             // ParseAllButton
             // 
-            ParseAllButton.Location = new Point(632, 18);
+            ParseAllButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            ParseAllButton.Location = new Point(601, 18);
             ParseAllButton.Name = "ParseAllButton";
-            ParseAllButton.Size = new Size(75, 23);
+            ParseAllButton.Size = new Size(76, 23);
             ParseAllButton.TabIndex = 41;
             ParseAllButton.Text = "Найти все";
             ParseAllButton.UseVisualStyleBackColor = true;
@@ -591,8 +596,9 @@
             // 
             // label26
             // 
+            label26.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label26.AutoSize = true;
-            label26.Location = new Point(6, 137);
+            label26.Location = new Point(6, 85);
             label26.Name = "label26";
             label26.Size = new Size(134, 15);
             label26.TabIndex = 40;
@@ -618,7 +624,8 @@
             // 
             // LayersLabel
             // 
-            LayersLabel.Location = new Point(130, 390);
+            LayersLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            LayersLabel.Location = new Point(130, 338);
             LayersLabel.Name = "LayersLabel";
             LayersLabel.Size = new Size(76, 23);
             LayersLabel.TabIndex = 37;
@@ -626,8 +633,9 @@
             // 
             // label24
             // 
+            label24.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label24.AutoSize = true;
-            label24.Location = new Point(8, 398);
+            label24.Location = new Point(8, 346);
             label24.Name = "label24";
             label24.Size = new Size(44, 15);
             label24.TabIndex = 35;
@@ -758,8 +766,9 @@
             // 
             // RubTLabel
             // 
+            RubTLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             RubTLabel.AutoSize = true;
-            RubTLabel.Location = new Point(373, 344);
+            RubTLabel.Location = new Point(373, 292);
             RubTLabel.Name = "RubTLabel";
             RubTLabel.Size = new Size(12, 15);
             RubTLabel.TabIndex = 33;
@@ -767,8 +776,9 @@
             // 
             // label22
             // 
+            label22.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label22.AutoSize = true;
-            label22.Location = new Point(229, 344);
+            label22.Location = new Point(229, 292);
             label22.Name = "label22";
             label22.Size = new Size(121, 15);
             label22.TabIndex = 32;
@@ -776,8 +786,9 @@
             // 
             // Label424
             // 
+            Label424.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             Label424.AutoSize = true;
-            Label424.Location = new Point(229, 272);
+            Label424.Location = new Point(229, 220);
             Label424.Name = "Label424";
             Label424.Size = new Size(74, 15);
             Label424.TabIndex = 31;
@@ -785,7 +796,8 @@
             // 
             // ConsumptionBox
             // 
-            ConsumptionBox.Location = new Point(310, 264);
+            ConsumptionBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            ConsumptionBox.Location = new Point(310, 212);
             ConsumptionBox.Name = "ConsumptionBox";
             ConsumptionBox.Size = new Size(46, 23);
             ConsumptionBox.TabIndex = 30;
@@ -793,8 +805,9 @@
             // 
             // CansLabel
             // 
+            CansLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             CansLabel.AutoSize = true;
-            CansLabel.Location = new Point(292, 320);
+            CansLabel.Location = new Point(292, 268);
             CansLabel.Name = "CansLabel";
             CansLabel.Size = new Size(12, 15);
             CansLabel.TabIndex = 29;
@@ -802,8 +815,9 @@
             // 
             // label21
             // 
+            label21.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label21.AutoSize = true;
-            label21.Location = new Point(229, 320);
+            label21.Location = new Point(229, 268);
             label21.Name = "label21";
             label21.Size = new Size(43, 15);
             label21.TabIndex = 28;
@@ -811,8 +825,9 @@
             // 
             // LitreLabel
             // 
+            LitreLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             LitreLabel.AutoSize = true;
-            LitreLabel.Location = new Point(292, 296);
+            LitreLabel.Location = new Point(292, 244);
             LitreLabel.Name = "LitreLabel";
             LitreLabel.Size = new Size(12, 15);
             LitreLabel.TabIndex = 27;
@@ -820,8 +835,9 @@
             // 
             // label20
             // 
+            label20.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label20.AutoSize = true;
-            label20.Location = new Point(229, 296);
+            label20.Location = new Point(229, 244);
             label20.Name = "label20";
             label20.Size = new Size(50, 15);
             label20.TabIndex = 26;
@@ -829,8 +845,9 @@
             // 
             // RubLabel
             // 
+            RubLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             RubLabel.AutoSize = true;
-            RubLabel.Location = new Point(373, 369);
+            RubLabel.Location = new Point(373, 317);
             RubLabel.Name = "RubLabel";
             RubLabel.Size = new Size(12, 15);
             RubLabel.TabIndex = 25;
@@ -838,8 +855,9 @@
             // 
             // label19
             // 
+            label19.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label19.AutoSize = true;
-            label19.Location = new Point(229, 369);
+            label19.Location = new Point(229, 317);
             label19.Name = "label19";
             label19.Size = new Size(109, 15);
             label19.TabIndex = 24;
@@ -881,21 +899,23 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.Location = new Point(680, 87);
+            pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            pictureBox1.Location = new Point(649, 87);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(144, 146);
+            pictureBox1.Size = new Size(145, 146);
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 19;
             pictureBox1.TabStop = false;
             // 
             // comboBox5
             // 
+            comboBox5.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             comboBox5.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox5.FormattingEnabled = true;
             comboBox5.Location = new Point(229, 47);
             comboBox5.MaxDropDownItems = 16;
             comboBox5.Name = "comboBox5";
-            comboBox5.Size = new Size(575, 23);
+            comboBox5.Size = new Size(544, 23);
             comboBox5.TabIndex = 18;
             comboBox5.SelectedIndexChanged += comboBox5_SelectedIndexChanged;
             // 
@@ -911,12 +931,12 @@
             // 
             // PaintsBox
             // 
-            PaintsBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            PaintsBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             PaintsBox.Location = new Point(229, 103);
             PaintsBox.Multiline = true;
             PaintsBox.Name = "PaintsBox";
             PaintsBox.ReadOnly = true;
-            PaintsBox.Size = new Size(400, 158);
+            PaintsBox.Size = new Size(370, 103);
             PaintsBox.TabIndex = 16;
             PaintsBox.TextChanged += PaintsBox_TextChanged;
             // 
@@ -941,7 +961,8 @@
             // 
             // HexBox
             // 
-            HexBox.Location = new Point(130, 361);
+            HexBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            HexBox.Location = new Point(130, 309);
             HexBox.Name = "HexBox";
             HexBox.Size = new Size(76, 23);
             HexBox.TabIndex = 11;
@@ -959,9 +980,10 @@
             // 
             // panel3
             // 
+            panel3.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             panel3.BackColor = Color.White;
             panel3.BorderStyle = BorderStyle.Fixed3D;
-            panel3.Location = new Point(6, 155);
+            panel3.Location = new Point(6, 103);
             panel3.Name = "panel3";
             panel3.Size = new Size(200, 200);
             panel3.TabIndex = 9;
@@ -970,7 +992,8 @@
             // 
             // button1
             // 
-            button1.Location = new Point(6, 360);
+            button1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            button1.Location = new Point(6, 308);
             button1.Name = "button1";
             button1.Size = new Size(102, 23);
             button1.TabIndex = 8;
@@ -982,51 +1005,41 @@
             // 
             coler.Controls.Add(resultBox);
             coler.Controls.Add(label35);
-            coler.Controls.Add(BaseTypeLabel);
             coler.Controls.Add(label29);
             coler.Controls.Add(colerAnswLabel);
             coler.Controls.Add(Vbox);
             coler.Location = new Point(4, 24);
             coler.Name = "coler";
             coler.Padding = new Padding(3);
-            coler.Size = new Size(836, 415);
+            coler.Size = new Size(807, 415);
             coler.TabIndex = 2;
             coler.Text = "Колеровка";
             coler.UseVisualStyleBackColor = true;
             // 
             // resultBox
             // 
+            resultBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             resultBox.BorderStyle = BorderStyle.None;
-            resultBox.Location = new Point(473, 29);
+            resultBox.Location = new Point(469, 29);
             resultBox.Name = "resultBox";
-            resultBox.Size = new Size(355, 204);
+            resultBox.Size = new Size(330, 204);
             resultBox.TabIndex = 16;
             resultBox.Text = "";
             // 
             // label35
             // 
-            label35.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label35.AutoSize = true;
-            label35.Location = new Point(114, 11);
+            label35.Location = new Point(109, 11);
             label35.Name = "label35";
             label35.Size = new Size(12, 15);
             label35.TabIndex = 15;
             label35.Text = "г";
             // 
-            // BaseTypeLabel
-            // 
-            BaseTypeLabel.AutoSize = true;
-            BaseTypeLabel.Location = new Point(229, 32);
-            BaseTypeLabel.Name = "BaseTypeLabel";
-            BaseTypeLabel.Size = new Size(12, 15);
-            BaseTypeLabel.TabIndex = 14;
-            BaseTypeLabel.Text = "-";
-            // 
             // label29
             // 
             label29.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label29.AutoSize = true;
-            label29.Location = new Point(768, 11);
+            label29.Location = new Point(739, 11);
             label29.Name = "label29";
             label29.Size = new Size(60, 15);
             label29.TabIndex = 3;
@@ -1055,7 +1068,7 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { выходToolStripMenuItem, оПрограммеToolStripMenuItem, менеджерПлагиновToolStripMenuItem, директорияToolStripMenuItem, лицензияToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(844, 24);
+            menuStrip1.Size = new Size(814, 24);
             menuStrip1.TabIndex = 1;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -1103,7 +1116,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(844, 467);
+            ClientSize = new Size(814, 430);
             Controls.Add(ColorMaker);
             Controls.Add(menuStrip1);
             Name = "Form1";
