@@ -18,7 +18,7 @@ namespace PaletteConverter
         public static List<IFormPlugin> FormPlugins = new();
 
         private static string pluginDir = "Plugins";
-        private static string enabledPluginsFile = "enabled_plugins.ini";
+        private static string enabledPluginsFile = "config.ini";
 
 
         private static Dictionary<string, IColorPalettePlugin> pluginByName = new();
@@ -191,10 +191,22 @@ namespace PaletteConverter
 
         public void LoadEnabledPlugins()
         {
+            EnabledPluginNames.Clear();
+
             if (File.Exists(enabledPluginsFile))
             {
                 var lines = File.ReadAllLines(enabledPluginsFile);
-                EnabledPluginNames = new HashSet<string>(lines);
+                foreach (var line in lines)
+                {
+                    var trimmedLine = line.Trim();
+                    if (trimmedLine.StartsWith("EnabledPlugins=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var pluginList = trimmedLine.Substring("EnabledPlugins=".Length);
+                        var names = pluginList.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        EnabledPluginNames = new HashSet<string>(names.Select(s => s.Trim()));
+                    }
+
+                }
             }
         }
         public static List<IColorPalettePlugin> GetEnabledPalettes()
@@ -259,8 +271,17 @@ namespace PaletteConverter
         private void SaveEnabledPlugins()
         {
             var enabledPlugins = checkedListBoxPlugins.CheckedItems.Cast<string>().ToList();
-            File.WriteAllLines(enabledPluginsFile, enabledPlugins);
+            var lines = new List<string>
+            {
+                $"EnabledPlugins={string.Join(",", enabledPlugins)}"
+            };
+
+            // В будущем сюда можно добавить другие параметры, например:
+            // lines.Add("RecentColors=#FF0000,#00FF00");
+
+            File.WriteAllLines(enabledPluginsFile, lines);
         }
+
 
         private void checkedListBoxPlugins_ItemCheck(object sender, ItemCheckEventArgs e)
         {

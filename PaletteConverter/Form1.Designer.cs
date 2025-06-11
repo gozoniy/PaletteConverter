@@ -31,6 +31,9 @@
             components = new System.ComponentModel.Container();
             ColorMaker = new TabControl();
             Converter = new TabPage();
+            label30 = new Label();
+            HistoryPanel = new FlowLayoutPanel();
+            ColorCount = new Label();
             AvgTimeLabel = new Label();
             PreviewButton = new Button();
             ScreenColorButton = new Button();
@@ -124,7 +127,6 @@
             директорияToolStripMenuItem = new ToolStripMenuItem();
             лицензияToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStrip1 = new ContextMenuStrip(components);
-            ColorCount = new Label();
             ColorMaker.SuspendLayout();
             Converter.SuspendLayout();
             Calc.SuspendLayout();
@@ -145,12 +147,14 @@
             ColorMaker.Location = new Point(0, 24);
             ColorMaker.Name = "ColorMaker";
             ColorMaker.SelectedIndex = 0;
-            ColorMaker.Size = new Size(814, 406);
+            ColorMaker.Size = new Size(871, 528);
             ColorMaker.TabIndex = 0;
             ColorMaker.SelectedIndexChanged += ColorMaker_SelectedIndexChanged;
             // 
             // Converter
             // 
+            Converter.Controls.Add(label30);
+            Converter.Controls.Add(HistoryPanel);
             Converter.Controls.Add(ColorCount);
             Converter.Controls.Add(AvgTimeLabel);
             Converter.Controls.Add(PreviewButton);
@@ -185,10 +189,38 @@
             Converter.Location = new Point(4, 24);
             Converter.Name = "Converter";
             Converter.Padding = new Padding(3);
-            Converter.Size = new Size(806, 378);
+            Converter.Size = new Size(863, 500);
             Converter.TabIndex = 0;
             Converter.Text = "Конвертер цветов";
             Converter.UseVisualStyleBackColor = true;
+            // 
+            // label30
+            // 
+            label30.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            label30.AutoSize = true;
+            label30.Location = new Point(8, 346);
+            label30.Name = "label30";
+            label30.Size = new Size(60, 15);
+            label30.TabIndex = 32;
+            label30.Text = "Недавние";
+            // 
+            // HistoryPanel
+            // 
+            HistoryPanel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            HistoryPanel.BorderStyle = BorderStyle.FixedSingle;
+            HistoryPanel.Location = new Point(8, 367);
+            HistoryPanel.Name = "HistoryPanel";
+            HistoryPanel.Size = new Size(847, 125);
+            HistoryPanel.TabIndex = 31;
+            // 
+            // ColorCount
+            // 
+            ColorCount.AutoSize = true;
+            ColorCount.Location = new Point(322, 61);
+            ColorCount.Name = "ColorCount";
+            ColorCount.Size = new Size(12, 15);
+            ColorCount.TabIndex = 30;
+            ColorCount.Text = "-";
             // 
             // AvgTimeLabel
             // 
@@ -202,7 +234,7 @@
             // PreviewButton
             // 
             PreviewButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            PreviewButton.Location = new Point(597, 323);
+            PreviewButton.Location = new Point(654, 323);
             PreviewButton.Name = "PreviewButton";
             PreviewButton.Size = new Size(204, 38);
             PreviewButton.TabIndex = 28;
@@ -237,14 +269,14 @@
             comboBox3.Items.AddRange(new object[] { "HSV", "RGB", "LCH", "LAB" });
             comboBox3.Location = new Point(322, 95);
             comboBox3.Name = "comboBox3";
-            comboBox3.Size = new Size(270, 23);
+            comboBox3.Size = new Size(327, 23);
             comboBox3.TabIndex = 25;
             comboBox3.SelectedIndexChanged += comboBox3_SelectedIndexChanged;
             // 
             // similarityBox
             // 
             similarityBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            similarityBox.Location = new Point(753, 297);
+            similarityBox.Location = new Point(810, 297);
             similarityBox.Name = "similarityBox";
             similarityBox.ReadOnly = true;
             similarityBox.Size = new Size(45, 23);
@@ -255,7 +287,7 @@
             // 
             label9.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label9.AutoSize = true;
-            label9.Location = new Point(598, 305);
+            label9.Location = new Point(655, 305);
             label9.Name = "label9";
             label9.Size = new Size(73, 15);
             label9.TabIndex = 23;
@@ -265,7 +297,7 @@
             // 
             label5.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label5.AutoSize = true;
-            label5.Location = new Point(741, 278);
+            label5.Location = new Point(798, 278);
             label5.Name = "label5";
             label5.Size = new Size(14, 15);
             label5.TabIndex = 22;
@@ -274,7 +306,7 @@
             // AnColB
             // 
             AnColB.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            AnColB.Location = new Point(761, 270);
+            AnColB.Location = new Point(818, 270);
             AnColB.Name = "AnColB";
             AnColB.Size = new Size(37, 23);
             AnColB.TabIndex = 21;
@@ -283,7 +315,7 @@
             // 
             label6.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label6.AutoSize = true;
-            label6.Location = new Point(667, 278);
+            label6.Location = new Point(724, 278);
             label6.Name = "label6";
             label6.Size = new Size(15, 15);
             label6.TabIndex = 20;
@@ -292,7 +324,7 @@
             // AnColG
             // 
             AnColG.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            AnColG.Location = new Point(687, 270);
+            AnColG.Location = new Point(744, 270);
             AnColG.Name = "AnColG";
             AnColG.Size = new Size(37, 23);
             AnColG.TabIndex = 19;
@@ -301,7 +333,7 @@
             // 
             label7.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label7.AutoSize = true;
-            label7.Location = new Point(598, 278);
+            label7.Location = new Point(655, 278);
             label7.Name = "label7";
             label7.Size = new Size(14, 15);
             label7.TabIndex = 18;
@@ -310,7 +342,7 @@
             // AnColR
             // 
             AnColR.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            AnColR.Location = new Point(618, 270);
+            AnColR.Location = new Point(675, 270);
             AnColR.Name = "AnColR";
             AnColR.Size = new Size(37, 23);
             AnColR.TabIndex = 17;
@@ -318,7 +350,7 @@
             // AnalogColorHEX
             // 
             AnalogColorHEX.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            AnalogColorHEX.Location = new Point(698, 241);
+            AnalogColorHEX.Location = new Point(755, 241);
             AnalogColorHEX.Name = "AnalogColorHEX";
             AnalogColorHEX.Size = new Size(100, 23);
             AnalogColorHEX.TabIndex = 16;
@@ -328,7 +360,7 @@
             // 
             label8.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label8.AutoSize = true;
-            label8.Location = new Point(598, 249);
+            label8.Location = new Point(655, 249);
             label8.Name = "label8";
             label8.Size = new Size(29, 15);
             label8.TabIndex = 15;
@@ -339,7 +371,7 @@
             comboBox2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             comboBox2.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox2.FormattingEnabled = true;
-            comboBox2.Location = new Point(598, 212);
+            comboBox2.Location = new Point(655, 212);
             comboBox2.Name = "comboBox2";
             comboBox2.Size = new Size(200, 23);
             comboBox2.TabIndex = 13;
@@ -361,7 +393,7 @@
             comboBox1.FormattingEnabled = true;
             comboBox1.Location = new Point(322, 35);
             comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(270, 23);
+            comboBox1.Size = new Size(327, 23);
             comboBox1.TabIndex = 11;
             comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
             // 
@@ -370,7 +402,7 @@
             panel2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             panel2.BackColor = Color.Transparent;
             panel2.BorderStyle = BorderStyle.Fixed3D;
-            panel2.Location = new Point(598, 6);
+            panel2.Location = new Point(655, 6);
             panel2.Name = "panel2";
             panel2.Size = new Size(200, 200);
             panel2.TabIndex = 3;
@@ -455,9 +487,9 @@
             // 
             // pipette
             // 
-            pipette.Location = new Point(6, 35);
+            pipette.Location = new Point(8, 35);
             pipette.Name = "pipette";
-            pipette.Size = new Size(104, 23);
+            pipette.Size = new Size(102, 23);
             pipette.TabIndex = 1;
             pipette.Text = "Фото пипетка";
             pipette.UseVisualStyleBackColor = true;
@@ -515,7 +547,7 @@
             Calc.Location = new Point(4, 24);
             Calc.Name = "Calc";
             Calc.Padding = new Padding(3);
-            Calc.Size = new Size(806, 378);
+            Calc.Size = new Size(863, 479);
             Calc.TabIndex = 1;
             Calc.Text = "Калькулятор краски";
             Calc.UseVisualStyleBackColor = true;
@@ -1015,7 +1047,7 @@
             coler.Location = new Point(4, 24);
             coler.Name = "coler";
             coler.Padding = new Padding(3);
-            coler.Size = new Size(806, 378);
+            coler.Size = new Size(863, 479);
             coler.TabIndex = 2;
             coler.Text = "Колеровка";
             coler.UseVisualStyleBackColor = true;
@@ -1072,7 +1104,7 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { выходToolStripMenuItem, оПрограммеToolStripMenuItem, менеджерПлагиновToolStripMenuItem, директорияToolStripMenuItem, лицензияToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(814, 24);
+            menuStrip1.Size = new Size(871, 24);
             menuStrip1.TabIndex = 1;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -1116,20 +1148,11 @@
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
             // 
-            // ColorCount
-            // 
-            ColorCount.AutoSize = true;
-            ColorCount.Location = new Point(322, 61);
-            ColorCount.Name = "ColorCount";
-            ColorCount.Size = new Size(12, 15);
-            ColorCount.TabIndex = 30;
-            ColorCount.Text = "-";
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(814, 430);
+            ClientSize = new Size(871, 552);
             Controls.Add(ColorMaker);
             Controls.Add(menuStrip1);
             Name = "Form1";
@@ -1253,5 +1276,7 @@
         private Label label35;
         private RichTextBox resultBox;
         private Label ColorCount;
+        private FlowLayoutPanel HistoryPanel;
+        private Label label30;
     }
 }

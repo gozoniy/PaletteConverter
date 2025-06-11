@@ -9,6 +9,7 @@ using ProtectionLib;
 using System.Management;
 using System.IO.Pipes;
 using MathNet.Numerics.LinearAlgebra;
+using System.Windows.Forms;
 
 
 
@@ -29,7 +30,7 @@ namespace PaletteConverter
 
 
 
-        private string enabledPluginsFile = "enabled_plugins.txt";
+        private string enabledPluginsFile = "config.ini";
         private Dictionary<string, PaletteColor> ralColors = new();
 
         double elapsedMs = 0;
@@ -66,10 +67,34 @@ namespace PaletteConverter
             refreshPlugins();
             LoadEnabledPluginNames();
 
+            HistoryPanel.AutoScroll = true;
+            HistoryPanel.WrapContents = false;
+            HistoryPanel.FlowDirection = FlowDirection.LeftToRight;
+            HistoryPanel.MouseWheel += HistoryPanel_MouseWheel;
+            HistoryPanel.WrapContents = false;
+            HistoryPanel.FlowDirection = FlowDirection.LeftToRight;
+
+            LoadRecentColors();
 
             EnsureLogTableExists();
             comboBox6.SelectedIndex = 0;
         }
+
+        private void HistoryPanel_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (e.Delta != 0)
+            {
+                int newValue = HistoryPanel.HorizontalScroll.Value - e.Delta;
+
+                // Ограничение по диапазону
+                newValue = Math.Max(HistoryPanel.HorizontalScroll.Minimum, newValue);
+                newValue = Math.Min(HistoryPanel.HorizontalScroll.Maximum, newValue);
+
+                HistoryPanel.HorizontalScroll.Value = newValue;
+                HistoryPanel.PerformLayout(); // Обновление позиции
+            }
+        }
+
 
         private void StartWmiUsbMonitoring()
         {
@@ -846,6 +871,182 @@ namespace PaletteConverter
         private MouseHook mouseHook;
 
 
+        List<Color> recentColors = new List<Color>();
+
+        void LoadRecentColors()
+        {
+            recentColors.Clear();
+
+            if (!File.Exists(enabledPluginsFile))
+                return;
+
+            var lines = File.ReadAllLines(enabledPluginsFile);
+
+            // Ищем строку с RecentColors
+            var recentColorsLine = lines.FirstOrDefault(line => line.StartsWith("RecentColors="));
+
+            if (recentColorsLine == null)
+                return;
+
+            // Получаем строку после "RecentColors="
+            var colorsPart = recentColorsLine.Substring("RecentColors=".Length);
+
+            if (string.IsNullOrWhiteSpace(colorsPart))
+                return;
+
+            // Разбиваем на цвета по запятой
+            var colorStrings = colorsPart.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var colorStr in colorStrings)
+            {
+                try
+                {
+                    // Цвета в формате #RRGGBB
+                    var c = ColorTranslator.FromHtml(colorStr.Trim());
+                    recentColors.Add(c);
+                }
+                catch
+                {
+                    // Игнорируем ошибки парсинга
+                }
+            }
+
+            UpdateRecentColorsPanel();
+            SetInitialRecentColor();
+        }
+
+        void SetInitialRecentColor()
+        {
+            if (recentColors.Count > 0)
+            {
+                var color = recentColors[0]; // Первый — самый последний добавленный
+
+                selectedRecentColor = color;
+                CurrentColorHEX.Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+                FindClosestColor();
+                UpdateRecentColorsPanel(); // Обновим UI с выделением
+            }
+        }
+
+
+        void AddRecentColor(Color color)
+        {
+            // Удаляем дубли (если есть), чтобы они не повторялись в начале
+            recentColors.Remove(color);
+
+            // Добавляем в начало
+            recentColors.Insert(0, color);
+
+            // Ограничение до 20 последних
+            if (recentColors.Count > 20)
+                recentColors = recentColors.Take(20).ToList();
+
+            UpdateRecentColorsPanel();
+
+            var recentColorHexes = recentColors.Select(c => $"#{c.R:X2}{c.G:X2}{c.B:X2}").ToList();
+
+            List<string> lines = new List<string>();
+            if (File.Exists(enabledPluginsFile))
+                lines = File.ReadAllLines(enabledPluginsFile).ToList();
+
+            int recentColorsLineIndex = lines.FindIndex(line => line.StartsWith("RecentColors="));
+            string recentColorsLine = $"RecentColors={string.Join(",", recentColorHexes)}";
+
+            if (recentColorsLineIndex >= 0)
+                lines[recentColorsLineIndex] = recentColorsLine;
+            else
+                lines.Add(recentColorsLine);
+
+            File.WriteAllLines(enabledPluginsFile, lines);
+        }
+
+
+
+
+        Color? selectedRecentColor = null; // поле класса, чтобы помнить выделенный цвет
+
+        void UpdateRecentColorsPanel()
+        {
+            HistoryPanel.Controls.Clear();
+
+            // Убедись, что HistoryPanel настроен:
+            HistoryPanel.AutoScroll = true;
+            HistoryPanel.HorizontalScroll.Enabled = true;
+            HistoryPanel.HorizontalScroll.Visible = true;
+            HistoryPanel.WrapContents = false;
+            HistoryPanel.FlowDirection = FlowDirection.LeftToRight;
+
+            foreach (var color in recentColors)
+            {
+                var colorPanel = new Panel
+                {
+                    Width = 95,
+                    Height = 95,
+                    BackColor = color,
+                    Margin = new Padding(2),
+                    Cursor = Cursors.Hand,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    Tag = color
+                };
+
+                bool isDark = (color.R * 0.299 + color.G * 0.587 + color.B * 0.114) < 128;
+
+                var label = new Label
+                {
+                    Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}",
+                    ForeColor = isDark ? Color.White : Color.Black,
+                    BackColor = Color.Transparent,
+                    AutoSize = false,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Dock = DockStyle.Bottom,
+                    Height = 20
+                };
+
+                colorPanel.Controls.Add(label);
+
+                if (selectedRecentColor.HasValue && selectedRecentColor.Value == color)
+                {
+                    colorPanel.Padding = new Padding(3);
+                    colorPanel.BorderStyle = BorderStyle.Fixed3D;
+                }
+
+                colorPanel.MouseClick += (s, e) =>
+                {
+                    if (e.Button == MouseButtons.Right)
+                    {
+                        // Удаление по ПКМ
+                        recentColors.Remove(color);
+                        UpdateRecentColorsPanel();
+
+                        // Обновить файл
+                        var recentColorHexes = recentColors.Select(c => $"#{c.R:X2}{c.G:X2}{c.B:X2}").ToList();
+                        var lines = File.Exists(enabledPluginsFile)
+                            ? File.ReadAllLines(enabledPluginsFile).ToList()
+                            : new List<string>();
+
+                        int idx = lines.FindIndex(line => line.StartsWith("RecentColors="));
+                        string newLine = $"RecentColors={string.Join(",", recentColorHexes)}";
+
+                        if (idx >= 0)
+                            lines[idx] = newLine;
+                        else
+                            lines.Add(newLine);
+
+                        File.WriteAllLines(enabledPluginsFile, lines);
+                    }
+                    else
+                    {
+                        CurrentColorHEX.Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+                        selectedRecentColor = color;
+                        FindClosestColor();
+                        UpdateRecentColorsPanel();
+                    }
+                };
+
+                HistoryPanel.Controls.Add(colorPanel);
+            }
+        }
+
 
         private void ScreenColorButton_Click(object sender, EventArgs e)
         {
@@ -870,6 +1071,7 @@ namespace PaletteConverter
                 // Останавливаем хук после клика
                 mouseHook.Unhook();
                 mouseHook = null;
+                AddRecentColor(panel1.BackColor); // Добавляем цвет в историю
             };
 
         }
