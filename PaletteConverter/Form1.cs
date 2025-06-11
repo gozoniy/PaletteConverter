@@ -32,14 +32,17 @@ namespace PaletteConverter
         private string enabledPluginsFile = "enabled_plugins.txt";
         private Dictionary<string, PaletteColor> ralColors = new();
 
-        long elapsedMs = 0;
-        static public Dictionary<string, Queue<long>> pluginExecutionTimes = new();
+        double elapsedMs = 0;
+        static public Dictionary<string, Queue<double>> pluginExecutionTimes = new();
         static public Dictionary<string, double> pluginAverageTimes = new();
 
         LicenseInfo license = Protection.CheckLicense("license.lic");
 
         ManagementEventWatcher insertWatcher;
         ManagementEventWatcher removeWatcher;
+
+        private Dictionary<string, Dictionary<string, PalettePluginContracts.PaletteColor>> colorCache
+    = new Dictionary<string, Dictionary<string, PalettePluginContracts.PaletteColor>>();
 
         public Form1()
         {
@@ -267,18 +270,38 @@ namespace PaletteConverter
         {
             string selected = comboBox1.SelectedItem?.ToString();
             var plugin = loadedPlugins.FirstOrDefault(p => p.Name == selected);
-            if (plugin != null)
+            if (plugin == null)
+                return;
+
+            // Загружаем палитру только если её ещё нет в кэше
+            if (!colorCache.TryGetValue(plugin.Name, out var colors))
             {
-                var colors = plugin.LoadColors();
-                comboBox2.Items.Clear();
-                foreach (var kvp in colors)
-                    comboBox2.Items.Add($"{kvp.Key} - {kvp.Value.name} - {kvp.Value.rgb_hex}");
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                colors = plugin.LoadColors();
+                stopwatch.Stop();
+                elapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+                colorCache[plugin.Name] = colors;
+
+                // Сохраняем время выполнения
+                if (!pluginExecutionTimes.ContainsKey(plugin.Name))
+                    pluginExecutionTimes[plugin.Name] = new Queue<double>();
+
+                var queue = pluginExecutionTimes[plugin.Name];
+                if (queue.Count >= 20)
+                    queue.Dequeue();
+
+                queue.Enqueue(elapsedMs);
+                UpdateAverageTime(plugin.Name);
             }
-            //comboBox2.DroppedDown = true;
-            FindClosestColor();
-            //System.Threading.Thread.Sleep(1000); // Replace "sleep()" with the correct method and add a semicolon
-            //comboBox2.DroppedDown = false;
+
+            // Обновляем comboBox2
+            comboBox2.Items.Clear();
+            foreach (var kvp in colors)
+                comboBox2.Items.Add($"{kvp.Key} - {kvp.Value.name} - {kvp.Value.rgb_hex}");
+            ColorCount.Text = $"Количество цветов: {comboBox2.Items.Count}";
+            FindClosestColor(); // запуск поиска
         }
+
         private void comboBox2_DrawItem(object sender, DrawItemEventArgs e)
         {
             if (e.Index < 0) return;  // Проверяем на допустимый индекс
@@ -380,15 +403,19 @@ namespace PaletteConverter
 
             // Получаем имя выбранного плагина
             string selectedPluginName = comboBox1.SelectedItem.ToString();
-
+            
             // Находим соответствующий плагин
             var plugin = loadedPlugins.FirstOrDefault(p => p.Name == selectedPluginName);
             if (plugin == null)
                 return;
 
             // Загружаем цвета из плагина
-            var colors = plugin.LoadColors();
-
+            if (!colorCache.TryGetValue(plugin.Name, out var colors))
+            {
+                MessageBox.Show("Цвета не загружены.");
+                return;
+            }
+            
             // Извлекаем код цвета (до дефиса)
             var selected = comboBox2.SelectedItem.ToString();
             var code = selected.Split('-')[0].Trim();
@@ -421,12 +448,13 @@ namespace PaletteConverter
 
             //updateSimilarity(minDistance, comparisonMethod);
             FindClosestColor(1);
+            
         }
         private void UpdateAverageTime(string pluginId)
         {
             if (!pluginExecutionTimes.TryGetValue(pluginId, out var queue) || queue.Count == 0)
                 return;
-
+            //MessageBox.Show(string.Join(", ", queue));
             double avg = queue.Average();
 
             pluginAverageTimes[pluginId] = avg;
@@ -443,21 +471,14 @@ namespace PaletteConverter
             if (plugin == null)
                 return;
 
-            // ДОБАВИТЬ: Измерение времени выполнения загрузки цветов
+            // Измерение времени выполнения загрузки цветов
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var colors = plugin.LoadColors();
-            stopwatch.Stop();
-            elapsedMs = stopwatch.ElapsedMilliseconds;
-            // Добавить сохранение времени выполнения
-            if (!pluginExecutionTimes.ContainsKey(plugin.Name))
-                pluginExecutionTimes[plugin.Name] = new Queue<long>();
-
-            var queue = pluginExecutionTimes[plugin.Name];
-            if (queue.Count >= 20) // максимум 20 последних измерений
-                queue.Dequeue();
-
-            queue.Enqueue(elapsedMs);
-            UpdateAverageTime(plugin.Name);
+            if (!colorCache.TryGetValue(plugin.Name, out var colors))
+            {
+                MessageBox.Show("Цвета не загружены.");
+                return;
+            }
+            
             // Преобразуем HEX в Color
             Color targetColor;
             try
@@ -575,7 +596,18 @@ namespace PaletteConverter
                     similarityBox.Text = "";
                 }
             }
+            stopwatch.Stop();
+            elapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+            // Добавить сохранение времени выполнения
+            if (!pluginExecutionTimes.ContainsKey(plugin.Name))
+                pluginExecutionTimes[plugin.Name] = new Queue<double>();
 
+            var queue = pluginExecutionTimes[plugin.Name];
+            if (queue.Count >= 20) // максимум 20 последних измерений
+                queue.Dequeue();
+
+            queue.Enqueue(elapsedMs);
+            UpdateAverageTime(plugin.Name);
         }
         private void updateSimilarity(int minDistance, string comparisonMethod)
         {
@@ -1018,7 +1050,6 @@ namespace PaletteConverter
             if (volume > 0 && (price > 0 && price < 30000))
             {
                 cansNeeded = litersNeeded / volume;
-                // ВАЖНО: Math.Ceiling(1.02) всегда даст 2, если тип double!
                 cans = Math.Ceiling(cansNeeded);
                 TeoryPrice = cans * price;
                 totalPrice = cansNeeded * price;
@@ -1341,27 +1372,52 @@ namespace PaletteConverter
             calculate();
         }
 
-        private void AnalogColorHEX_TextChanged(object sender, EventArgs e)
+        CancellationTokenSource debounceTokenSource;
+
+        private async void AnalogColorHEX_TextChanged(object sender, EventArgs e)
         {
             CalculateRequiredLayers();
             calculate();
-            var colorPreviewPlugin = PluginManagerForm.FormPlugins
-                .FirstOrDefault(p => p.Name == "Color Preview");
+
+            debounceTokenSource?.Cancel(); // отменяем предыдущий вызов
+            debounceTokenSource = new CancellationTokenSource();
+            var token = debounceTokenSource.Token;
+
             try
             {
-                dynamic plugin = colorPreviewPlugin;
-                plugin.SetColor(panel2.BackColor);
+                await Task.Delay(150, token); // debounce-задержка
+            }
+            catch (TaskCanceledException)
+            {
+                return; // если отменён — ничего не делаем
+            }
+
+            var colorPreviewPlugin = PluginManagerForm.FormPlugins
+                .FirstOrDefault(p => p.Name == "Color Preview");
+
+            try
+            {
+                if (colorPreviewPlugin is not null)
+                {
+                    dynamic plugin = colorPreviewPlugin;
+                    plugin.SetColor(panel2.BackColor);
+                }
             }
             catch
             {
-
+                // логировать можно при необходимости
             }
         }
+
 
         private void PaintsBox_TextChanged(object sender, EventArgs e)
         {
 
         }
+
+        //private Form previewForm = null;
+
+
 
         private void PreviewButton_Click(object sender, EventArgs e)
         {
@@ -1374,10 +1430,10 @@ namespace PaletteConverter
                 return;
             }
 
-            // Получаем цвет из главной формы
-            Color selectedColor = panel2.BackColor;
+            // Создаём новую форму при каждом открытии
+            Form previewForm = colorPreviewPlugin.GetMainForm();
 
-            // Устанавливаем цвет в плагин (если реализован метод SetColor)
+            // Устанавливаем цвет
             try
             {
                 dynamic plugin = colorPreviewPlugin;
@@ -1388,16 +1444,13 @@ namespace PaletteConverter
                 MessageBox.Show("Ошибка установки цвета в плагине: " + ex.Message);
             }
 
-            // Показываем форму предпросмотра
-            var previewForm = colorPreviewPlugin.GetMainForm();
-
-            previewForm.FormClosed += (s, ev) =>
-            {
-                previewForm.Dispose();
-            };
-
-            previewForm.Show(this);
+            // Отображаем и разрешаем пользователю закрыть форму — она будет уничтожена
+            previewForm.Show(this);  // передаём this, если нужно модальное родство
+            previewForm.BringToFront();
         }
+
+
+
 
 
 

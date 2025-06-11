@@ -124,6 +124,7 @@
             директорияToolStripMenuItem = new ToolStripMenuItem();
             лицензияToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStrip1 = new ContextMenuStrip(components);
+            ColorCount = new Label();
             ColorMaker.SuspendLayout();
             Converter.SuspendLayout();
             Calc.SuspendLayout();
@@ -150,6 +151,7 @@
             // 
             // Converter
             // 
+            Converter.Controls.Add(ColorCount);
             Converter.Controls.Add(AvgTimeLabel);
             Converter.Controls.Add(PreviewButton);
             Converter.Controls.Add(ScreenColorButton);
@@ -230,6 +232,7 @@
             // comboBox3
             // 
             comboBox3.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            comboBox3.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox3.FormattingEnabled = true;
             comboBox3.Items.AddRange(new object[] { "HSV", "RGB", "LCH", "LAB" });
             comboBox3.Location = new Point(322, 95);
@@ -354,6 +357,7 @@
             // comboBox1
             // 
             comboBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox1.FormattingEnabled = true;
             comboBox1.Location = new Point(322, 35);
             comboBox1.Name = "comboBox1";
@@ -1011,7 +1015,7 @@
             coler.Location = new Point(4, 24);
             coler.Name = "coler";
             coler.Padding = new Padding(3);
-            coler.Size = new Size(807, 415);
+            coler.Size = new Size(806, 378);
             coler.TabIndex = 2;
             coler.Text = "Колеровка";
             coler.UseVisualStyleBackColor = true;
@@ -1111,6 +1115,15 @@
             // 
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
+            // 
+            // ColorCount
+            // 
+            ColorCount.AutoSize = true;
+            ColorCount.Location = new Point(322, 61);
+            ColorCount.Name = "ColorCount";
+            ColorCount.Size = new Size(12, 15);
+            ColorCount.TabIndex = 30;
+            ColorCount.Text = "-";
             // 
             // Form1
             // 
@@ -1239,5 +1252,6 @@
         private Label BaseTypeLabel;
         private Label label35;
         private RichTextBox resultBox;
+        private Label ColorCount;
     }
 }
