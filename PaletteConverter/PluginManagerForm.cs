@@ -420,5 +420,10 @@ namespace PaletteConverter
                 MessageBox.Show("Настройки доступны только для плагинов интерфейса.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
+
+        private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

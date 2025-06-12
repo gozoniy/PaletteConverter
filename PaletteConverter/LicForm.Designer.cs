@@ -39,39 +39,44 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label1.Location = new Point(12, 9);
+            label1.Font = new Font("Google Sans", 12F, FontStyle.Bold);
+            label1.Location = new Point(15, 12);
+            label1.Margin = new Padding(4, 0, 4, 0);
             label1.Name = "label1";
-            label1.Size = new Size(126, 15);
+            label1.Size = new Size(168, 20);
             label1.TabIndex = 0;
             label1.Text = "Владелец лицензии";
             // 
             // NameLabel
             // 
             NameLabel.AutoSize = true;
-            NameLabel.Location = new Point(12, 24);
+            NameLabel.Font = new Font("Google Sans", 12F);
+            NameLabel.Location = new Point(15, 32);
+            NameLabel.Margin = new Padding(4, 0, 4, 0);
             NameLabel.Name = "NameLabel";
-            NameLabel.Size = new Size(12, 15);
+            NameLabel.Size = new Size(16, 20);
             NameLabel.TabIndex = 1;
             NameLabel.Text = "-";
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label2.Location = new Point(12, 39);
+            label2.Font = new Font("Google Sans", 12F, FontStyle.Bold);
+            label2.Location = new Point(15, 52);
+            label2.Margin = new Padding(4, 0, 4, 0);
             label2.Name = "label2";
-            label2.Size = new Size(84, 15);
+            label2.Size = new Size(113, 20);
             label2.TabIndex = 2;
             label2.Text = "Организация";
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label3.Location = new Point(12, 69);
+            label3.Font = new Font("Google Sans", 12F, FontStyle.Bold);
+            label3.Location = new Point(15, 92);
+            label3.Margin = new Padding(4, 0, 4, 0);
             label3.Name = "label3";
-            label3.Size = new Size(113, 15);
+            label3.Size = new Size(157, 20);
             label3.TabIndex = 3;
             label3.Text = "Действительна до";
             label3.Click += label3_Click;
@@ -79,32 +84,38 @@
             // OrgLabel
             // 
             OrgLabel.AutoSize = true;
-            OrgLabel.Location = new Point(12, 54);
+            OrgLabel.Font = new Font("Google Sans", 12F);
+            OrgLabel.Location = new Point(15, 72);
+            OrgLabel.Margin = new Padding(4, 0, 4, 0);
             OrgLabel.Name = "OrgLabel";
-            OrgLabel.Size = new Size(12, 15);
+            OrgLabel.Size = new Size(16, 20);
             OrgLabel.TabIndex = 4;
             OrgLabel.Text = "-";
             // 
             // DateLabel
             // 
             DateLabel.AutoSize = true;
-            DateLabel.Location = new Point(12, 84);
+            DateLabel.Font = new Font("Google Sans", 12F);
+            DateLabel.Location = new Point(15, 112);
+            DateLabel.Margin = new Padding(4, 0, 4, 0);
             DateLabel.Name = "DateLabel";
-            DateLabel.Size = new Size(12, 15);
+            DateLabel.Size = new Size(16, 20);
             DateLabel.TabIndex = 5;
             DateLabel.Text = "-";
             // 
             // LicForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(9F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(332, 132);
+            ClientSize = new Size(427, 176);
             Controls.Add(DateLabel);
             Controls.Add(OrgLabel);
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(NameLabel);
             Controls.Add(label1);
+            Font = new Font("Google Sans", 12F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            Margin = new Padding(4);
             Name = "LicForm";
             Text = "Информация о лицензии";
             ResumeLayout(false);

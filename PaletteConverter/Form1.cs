@@ -10,6 +10,14 @@ using System.Management;
 using System.IO.Pipes;
 using MathNet.Numerics.LinearAlgebra;
 using System.Windows.Forms;
+using System.Data.Entity;
+using System.Data;
+
+using FastReport;
+using iTextSharp.text.pdf;
+using iTextSharp.text;
+
+
 
 
 
@@ -323,7 +331,7 @@ namespace PaletteConverter
             comboBox2.Items.Clear();
             foreach (var kvp in colors)
                 comboBox2.Items.Add($"{kvp.Key} - {kvp.Value.name} - {kvp.Value.rgb_hex}");
-            ColorCount.Text = $"Количество цветов: {comboBox2.Items.Count}";
+            ColorCount.Text = $"Всего: {comboBox2.Items.Count}";
             FindClosestColor(); // запуск поиска
         }
 
@@ -428,7 +436,7 @@ namespace PaletteConverter
 
             // Получаем имя выбранного плагина
             string selectedPluginName = comboBox1.SelectedItem.ToString();
-            
+
             // Находим соответствующий плагин
             var plugin = loadedPlugins.FirstOrDefault(p => p.Name == selectedPluginName);
             if (plugin == null)
@@ -440,7 +448,7 @@ namespace PaletteConverter
                 MessageBox.Show("Цвета не загружены.");
                 return;
             }
-            
+
             // Извлекаем код цвета (до дефиса)
             var selected = comboBox2.SelectedItem.ToString();
             var code = selected.Split('-')[0].Trim();
@@ -473,7 +481,7 @@ namespace PaletteConverter
 
             //updateSimilarity(minDistance, comparisonMethod);
             FindClosestColor(1);
-            
+
         }
         private void UpdateAverageTime(string pluginId)
         {
@@ -483,7 +491,7 @@ namespace PaletteConverter
             double avg = queue.Average();
 
             pluginAverageTimes[pluginId] = avg;
-            AvgTimeLabel.Text = $"Среднее время: {avg:F2} мс";
+            AvgTimeLabel.Text = $"Avg: {avg:F2} мс";
         }
 
         public void FindClosestColor(int flag = 0)
@@ -503,7 +511,7 @@ namespace PaletteConverter
                 MessageBox.Show("Цвета не загружены.");
                 return;
             }
-            
+
             // Преобразуем HEX в Color
             Color targetColor;
             try
@@ -633,6 +641,10 @@ namespace PaletteConverter
 
             queue.Enqueue(elapsedMs);
             UpdateAverageTime(plugin.Name);
+
+            UIButton.ApplyColorToAll(this, panel2.BackColor); // Устанавливаем цвет панели в качестве темы
+            UITabControl.ApplyToAll(this, panel2.BackColor);
+            colercalc();
         }
         private void updateSimilarity(int minDistance, string comparisonMethod)
         {
@@ -708,6 +720,7 @@ namespace PaletteConverter
         private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
         {
             FindClosestColor();
+
         }
         private int ColorDistanceHSV(Color c1, Color c2)
         {
@@ -1993,9 +2006,185 @@ namespace PaletteConverter
         {
             if (ColorMaker.SelectedTab == coler) // или по индексу: tabControl1.SelectedIndex == 1
             {
-                
+
                 colercalc();
             }
+        }
+
+        private void отчетыToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void numericUpDownThreads_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void времяПодбораToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string filePath = Path.Combine(Application.StartupPath, "PluginReport.pdf");
+
+            try
+            {
+                using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    
+
+                    Document doc = new Document(PageSize.A4, 20, 20, 20, 20);
+                    PdfWriter writer = PdfWriter.GetInstance(doc, fs);
+                    doc.Open();
+
+                    var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
+                    doc.Add(new Paragraph("Convertion time report", titleFont));
+                    doc.Add(new Paragraph($"Date: {DateTime.Now}"));
+                    doc.Add(new Paragraph("\n"));
+
+                    foreach (var pluginEntry in pluginExecutionTimes)
+                    {
+                        string pluginName = pluginEntry.Key;
+                        Queue<double> times = pluginEntry.Value;
+
+                        var pluginFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
+                        doc.Add(new Paragraph($"{pluginName}", pluginFont));
+
+                        if (times.Count == 0)
+                        {
+                            doc.Add(new Paragraph("Missing data"));
+                        }
+                        else
+                        {
+                            PdfPTable table = new PdfPTable(2);
+                            table.WidthPercentage = 80;
+                            table.SetWidths(new float[] { 1, 2 });
+
+                            table.AddCell(new PdfPCell(new Phrase("Iteration")) { BackgroundColor = BaseColor.LIGHT_GRAY });
+                            table.AddCell(new PdfPCell(new Phrase("Time, ms")) { BackgroundColor = BaseColor.LIGHT_GRAY });
+
+                            int idx = 1;
+                            foreach (var t in times)
+                            {
+                                table.AddCell(idx.ToString());
+                                table.AddCell(t.ToString("F3"));
+                                idx++;
+                            }
+                            doc.Add(table);
+                        }
+                        doc.Add(new Paragraph("\n"));
+                    }
+
+                    doc.Close();
+                }
+
+                //MessageBox.Show($"Отчет успешно сохранён в:\n{filePath}", "Отчет", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Открываем отчет
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+                    {
+                        FileName = filePath,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception exOpen)
+                {
+                    MessageBox.Show($"Не удалось открыть отчет:\n{exOpen.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при создании отчета:\n{ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void времяПарсингаToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string filePath = Path.Combine(Application.StartupPath, "ParseLogReport.pdf");
+            
+            try
+            {
+                using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    Document doc = new Document(PageSize.A4, 20, 20, 20, 20);
+                    PdfWriter writer = PdfWriter.GetInstance(doc, fs);
+                    doc.Open();
+                    string dbPath = Path.Combine(Application.StartupPath, "log.db");
+                    
+                    string connectionString;
+                    connectionString = $"Data Source={dbPath}";
+                    var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
+                    doc.Add(new Paragraph("Parse Log Report", titleFont));
+                    doc.Add(new Paragraph($"Date: {DateTime.Now}"));
+                    doc.Add(new Paragraph("\n"));
+
+
+                    using (var conn = new SQLiteConnection(connectionString))
+                    {
+                        conn.Open();
+
+                        string query = @"
+                    SELECT 
+                        ThreadId,
+                        COUNT(*) AS TaskCount,
+                        MIN(DurationMs) AS MinDuration,
+                        ROUND(AVG(DurationMs), 2) AS AvgDuration,
+                        MAX(DurationMs) AS MaxDuration
+                    FROM ParseLog
+                    GROUP BY ThreadId
+                    ORDER BY ThreadId;
+                ";
+
+                        using (var cmd = new SQLiteCommand(query, conn))
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            PdfPTable table = new PdfPTable(5);
+                            table.WidthPercentage = 100;
+                            table.SetWidths(new float[] { 1, 2, 2, 2, 2 });
+
+                            // Заголовки таблицы
+                            BaseColor headerColor = BaseColor.LIGHT_GRAY;
+                            table.AddCell(new PdfPCell(new Phrase("Thread")) { BackgroundColor = headerColor });
+                            table.AddCell(new PdfPCell(new Phrase("Tasks")) { BackgroundColor = headerColor });
+                            table.AddCell(new PdfPCell(new Phrase("min, ms")) { BackgroundColor = headerColor });
+                            table.AddCell(new PdfPCell(new Phrase("avg, ms")) { BackgroundColor = headerColor });
+                            table.AddCell(new PdfPCell(new Phrase("max, ms")) { BackgroundColor = headerColor });
+
+                            while (reader.Read())
+                            {
+                                table.AddCell(reader["ThreadId"].ToString());
+                                table.AddCell(reader["TaskCount"].ToString());
+                                table.AddCell(reader["MinDuration"].ToString());
+                                table.AddCell(reader["AvgDuration"].ToString());
+                                table.AddCell(reader["MaxDuration"].ToString());
+                            }
+
+                            doc.Add(table);
+                        }
+                    }
+
+                    doc.Close();
+                }
+
+                // Открываем отчет
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+                    {
+                        FileName = filePath,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception exOpen)
+                {
+                    MessageBox.Show($"Не удалось открыть отчет:\n{exOpen.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при создании отчета:\n{ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
         }
     }
 
