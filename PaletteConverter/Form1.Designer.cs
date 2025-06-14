@@ -1062,9 +1062,9 @@ namespace PaletteConverter
             // 
             // SquareBox
             // 
-            SquareBox.Location = new Point(143, 54);
+            SquareBox.Location = new Point(125, 54);
             SquareBox.Name = "SquareBox";
-            SquareBox.Size = new Size(46, 27);
+            SquareBox.Size = new Size(64, 27);
             SquareBox.TabIndex = 6;
             SquareBox.TextChanged += SquareBox_TextChanged;
             // 
@@ -1443,14 +1443,14 @@ namespace PaletteConverter
             // времяПодбораToolStripMenuItem
             // 
             времяПодбораToolStripMenuItem.Name = "времяПодбораToolStripMenuItem";
-            времяПодбораToolStripMenuItem.Size = new Size(180, 22);
+            времяПодбораToolStripMenuItem.Size = new Size(174, 22);
             времяПодбораToolStripMenuItem.Text = "Время подбора";
             времяПодбораToolStripMenuItem.Click += времяПодбораToolStripMenuItem_Click;
             // 
             // времяПарсингаToolStripMenuItem
             // 
             времяПарсингаToolStripMenuItem.Name = "времяПарсингаToolStripMenuItem";
-            времяПарсингаToolStripMenuItem.Size = new Size(180, 22);
+            времяПарсингаToolStripMenuItem.Size = new Size(174, 22);
             времяПарсингаToolStripMenuItem.Text = "Время парсинга";
             времяПарсингаToolStripMenuItem.Click += времяПарсингаToolStripMenuItem_Click;
             // 
