@@ -12,8 +12,8 @@
 - Инсталлятор InnoSetup
 
 ## 🖼 Скриншоты
-![Главное окно](https://github.com/gozoniy/PaletteConverter/blob/0aef215d418b6409d95bda9e82ab4769ab3d4261/docs/UI.gif)
-![Подбор цвета](docs/screenshot_color.png)
+![Динамический UI](https://github.com/gozoniy/PaletteConverter/blob/0aef215d418b6409d95bda9e82ab4769ab3d4261/docs/UI.gif)
+![Предпросмотр в реальном времени](https://github.com/gozoniy/PaletteConverter/blob/eec0a609f83601975f0f7f6e407a3d64d2535314/docs/Preview.gif)
 
 ## 🛠 Технологии
 C#, WPF, Guna2 UI, SQLite, JSON, HTML Parsing, InnoSetup
