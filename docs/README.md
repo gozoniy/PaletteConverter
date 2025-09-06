@@ -12,7 +12,7 @@
 - Инсталлятор InnoSetup
 
 ## 🖼 Скриншоты
-![Главное окно](docs/UI.gif)
+![Главное окно](https://github.com/gozoniy/PaletteConverter/blob/0aef215d418b6409d95bda9e82ab4769ab3d4261/docs/UI.gif)
 ![Подбор цвета](docs/screenshot_color.png)
 
 ## 🛠 Технологии
